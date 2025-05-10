@@ -2,13 +2,13 @@
   import SmInput from '@/components/icons/SmInput.vue';
   import SmButton from '@/components/icons/SmButton.vue';
   import { ref } from 'vue';
-  import { signIn, createAccount } from '@/firebase/firebaseAccount';
+  import { createAccount } from '@/firebase/firebaseAccount';
 
   const email = ref('');
   const password = ref('');
 
-  const singInFunc = () => { // we also renamed this method
-    signIn(email.value, password.value, (res) => {
+  const createAccountFunc= () => { // we also renamed this method
+    createAccount(email.value, password.value, (res) => {
       console.log(res);
     })
   }
@@ -19,6 +19,6 @@
   <div class="flex flex-col w-[50%] mx-auto">
     <SmInput label="メールアドレス" v-model="email" />
     <SmInput label="パスワード" type="password" v-model="password" />
-    <SmButton @click="singInFunc  " />
+    <SmButton @click="createAccountFunc" />
   </div>
 </template>
