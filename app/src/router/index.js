@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import { useUserStatus } from '@/stores/userStatus'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,11 +12,17 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        requiresAuth: true,
+      }
     },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
+      meta: {
+        requiresAuth: false,
+      }
     },
     {
       path: '/register',
@@ -26,17 +33,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const auth = getAuth();
+  const userStatus = useUserStatus(); // Pinia から状態を取得
+  const isLoggedIn = userStatus.isLoggedIn; // 状態をチェック
 
-  const publicPages = ['/login', '/register'];
-  const authRequired = !publicPages.includes(to.path);
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    // 🔐 ログインが必要で未ログイン → ログイン画面へ
+    next({ name: 'login' })
+  } else if ((to.name === 'login') && isLoggedIn) {
+    // ✅ ログイン済みならログイン・登録画面に行かせない → ホームにリダイレクト
+    next({ name: 'home' })
+  } else {
+    // 👍 通常通り遷移
+    next()
+  }
+});
 
-  onAuthStateChanged(auth, (user) => {
-    if(authRequired && !user) {
-      next('/login')
-    }else{
-      next();
-    }
-  })
-})
 export default router
