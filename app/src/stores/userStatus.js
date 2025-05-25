@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-export const useUserStatus = defineStore('userStatus', () => {
+export const userStatus = defineStore('userStatus', () => {
   const user = ref(null);
 
   const isLoggedIn = computed(() => user.value !== null);

@@ -1,31 +1,39 @@
-import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from './firebase/firebase'
-import { useUserStatus } from './stores/userStatus'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import App from './App.vue'
 import router from './router'
+import './assets/main.css'
+import './assets/firebase.init'
+import { userStatus } from './stores/userStatus'
 
-// アプリ作成と Pinia セットアップ
+// リロードしたときにログイン情報が消えるため下記でfirebaseから再取得している
+
 const app = createApp(App)
-const pinia = createPinia()
-let isAppMounted = false;
-app.use(pinia)
-const userStatus = useUserStatus();
+let isAppInitialized = false
 
-// 認証状態の監視は Pinia 初期化後に！
+app.use(createPinia())
+const auth = getAuth();
+const store = userStatus();
+
+// 認証状態が確定してからマウント＆ルーター利用
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userStatus.setUser(user)
-  } else {
-    userStatus.clearUser()
-  }
+  store.setUser(user)
 
-  if(!isAppMounted){
-    // 認証チェック後に mount するようにすることで、表示チラつきを防げる
+  if (!isAppInitialized) {
+    isAppInitialized = true
+
+    // ルーターガード登録
+    router.beforeEach((to, from, next) => {
+      if (to.matched.some(record => !record.meta.isPublic) && !store.isLoggedIn) {
+        next('/login')
+      } else {
+        next()
+      }
+    })
+
     app.use(router)
     app.mount('#app')
-    isAppMounted = true;
   }
 })
+

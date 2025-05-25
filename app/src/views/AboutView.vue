@@ -4,6 +4,6 @@
 
 <template>
   <AuthLayout>
-    <h1>ホームです</h1>
+    <h1>About</h1>
   </AuthLayout>
 </template>
