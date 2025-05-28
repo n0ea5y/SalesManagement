@@ -2,13 +2,20 @@
   const props = defineProps({
     type: {
       type: String,
-      default: 'button',
+      default: 'store',
+      validator: (value) => ['store', 'update', 'delete'].includes(value),
     },
-    value: {
+    label: {
       type: String,
       default: '送信',
     }
   })
+
+  const color = {
+    store: 'bg-blue-200',
+    update: 'bg-yellow-200',
+    delete: 'bg-red-200',
+  };
 
   const emit = defineEmits(['click'])
   const  handleClick = (val) => {
@@ -18,10 +25,10 @@
 
 <template>
   <button
-    :type="type"
     class="border-2 border-gray-700 rounded-md p-2"
-    @click="handleClick"
+    :class="color[props.type]"
+      @click="handleClick"
     >
-    {{ value }}
+    {{ label }}
   </button>
 </template>

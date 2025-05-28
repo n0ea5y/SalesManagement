@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="">
+  <div class="mb-4">
     <HeaderView>
     </HeaderView>
   </div>

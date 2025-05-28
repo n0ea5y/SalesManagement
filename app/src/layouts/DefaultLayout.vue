@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <div class="bg-red-100">
+  <div class="">
     <slot></slot>
   </div>
 </template>

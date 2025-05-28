@@ -17,6 +17,10 @@ const router = createRouter({
       component: AboutView,
     },
     {
+      path: '/media-agencies',
+      name: 'mediaAgencies',
+      component: () => import('../views/MediaAgencies.vue')    },
+    {
       path: '/login',
       name: 'login',
       component: LoginView,
