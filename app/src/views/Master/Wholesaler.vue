@@ -6,37 +6,37 @@
   import { onMounted, ref } from 'vue';
 
   onMounted(async () => {
-    await getMediaAgenciesMaster();
+    await getWholesalerMaster();
   });
 
-  const mediaAgencies = ref([]);
-  const mediaAgent = ref({});
+  const wholesalers = ref([]);
+  const wholesaler = ref({});
   const addMode = ref(true);
 
   const rowClick = (value) => {
     addMode.value = false;
-    mediaAgent.value = { ...value };
+    wholesaler.value = { ...value };
   }
 
   const submit = async () => {
-    await addDoc(collection(db, "media_agencies"), {
-      name: mediaAgent.value.name,
+    await addDoc(collection(db, "wholesalers"), {
+      name: wholesaler.value.name,
     });
-    mediaAgent.value = {}
-    getMediaAgenciesMaster();
+    wholesaler.value = {}
+    getWholesalerMaster();
   }
 
   const update = async () => {
-    await updateDoc(doc(db, "media_agencies", mediaAgent.value.id), {
-      name: mediaAgent.value.name,
+    await updateDoc(doc(db, "wholesalers", wholesaler.value.id), {
+      name: wholesaler.value.name,
     });
-    mediaAgent.value = {}
-    getMediaAgenciesMaster();
+    wholesaler.value = {}
+    getWholesalerMaster();
   }
 
-  const getMediaAgenciesMaster = async () => {
-    const querySnapshot = await getDocs(collection(db, "media_agencies"));
-    mediaAgencies.value = querySnapshot.docs.map((doc) => {
+  const getWholesalerMaster = async () => {
+    const querySnapshot = await getDocs(collection(db, "wholesalers"));
+    wholesalers.value = querySnapshot.docs.map((doc) => {
       return { 'id': doc.id, 'name': doc.data().name };
     });
   }
@@ -48,7 +48,7 @@
       <table class="table-fixed w-full border-collapse">
         <thead class="bg-gray-200">
           <tr>
-            <th class="p-2 text-center">業者名</th>
+            <th class="p-2 text-center">卸売業者名</th>
           </tr>
         </thead>
       </table>
@@ -56,9 +56,9 @@
       <div class="max-h-[300px] overflow-y-auto">
         <table class="table-fixed w-full border-collapse">
           <tbody>
-            <tr v-for="(agent, index) in mediaAgencies" :key="index" >
-              <td class="p-1 border-t border-gray-300 flex items-center">{{ agent.name }}
-                <span class="text-sm border rounded py-1 px-2 bg-yellow-200 ml-auto" @click="rowClick(agent)">
+            <tr v-for="(wholesaler, index) in wholesalers" :key="index" >
+              <td class="p-1 border-t border-gray-300 flex items-center">{{ wholesaler.name }}
+                <span class="text-sm border rounded py-1 px-2 bg-yellow-200 ml-auto" @click="rowClick(wholesaler)">
                     <svg xmlns="http://www.w3.org/2000/svg"
                     fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -74,13 +74,13 @@
     <div class="w-[95%] mx-auto">
       <form @submit.prevent="addMode ? submit() : update()">
         <div class="flex flex-col">
-          <label for="mediaAgentName">業者名 <span class="text-red-500 font-bold text-xs">※必須</span></label>
-          <input id="mediaAgentName" type="text" class="border border-black rounded h-[40px] text-lg"
-            v-model="mediaAgent.name" required>
+          <label for="wholesalerName">卸売業者名<span class="text-red-500 font-bold text-xs">※必須</span></label>
+          <input id="wholesalerName" type="text" class="border border-black rounded h-[40px] text-lg"
+            v-model="wholesaler.name" required>
         </div>
         <SmButton v-if="!addMode" label="新規登録" class="px-4 py-1 mt-5 mr-3" @click="() => {
           addMode = true
-          mediaAgent = {};
+          wholesaler = {};
         }" />
         <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
         <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
