@@ -23,6 +23,8 @@
   const submit = async () => {
     await addDoc(collection(db, "staff"), {
       name: staff.value.name,
+      type: staff.value.type,
+      hourly_wage: staff.value.hourly_wage,
     });
     staff.value = {}
     getStaffMaster();
@@ -32,6 +34,8 @@
   const update = async () => {
     await updateDoc(doc(db, "staff", staff.value.id), {
       name: staff.value.name,
+      type: staff.value.type,
+      hourly_wage: staff.value.hourly_wage,
     });
     staff.value = {}
     getStaffMaster();
@@ -42,10 +46,16 @@
   const getStaffMaster = async () => {
     const querySnapshot = await getDocs(collection(db, "staff"));
     staffMaster.value = querySnapshot.docs.map((doc) => {
-      return { 'id': doc.id, 'name': doc.data().name };
+      return { 'id': doc.id, 'name': doc.data().name, 'type': doc.data().type, 'hourly_wage': doc.data().hourly_wage };
     });
     isLoaded.value = true;
   }
+
+  const staffTypes = ([
+    {'id': '1', 'name': '店内'},
+    {'id': '2', 'name': '外板'},
+    {'id': '3', 'name': '店内、外板'},
+  ])
 </script>
 
 <template>
@@ -61,7 +71,7 @@
 
       <div class="max-h-[300px] overflow-y-auto">
         <table class="table-fixed w-full border-collapse"> <tbody>
-            <tr v-for="(staff, index) in staffMaster" :key="index" >
+            <tr v-for="staff in staffMaster" :key="staff.id" >
               <td class="p-1 border-t border-gray-300 flex items-center">{{ staff.name }}
                 <span class="text-sm border rounded py-1 px-2 bg-yellow-200 ml-auto" @click="rowClick(staff)">
                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -82,12 +92,27 @@
       </div>
     </div>
 
-    <div class="w-[95%] mx-auto">
+    <div class="w-[95%] mt-10 mx-auto">
       <form @submit.prevent="addMode ? submit() : update()">
-        <div class="flex flex-col">
-          <label for="staffName">名前<span class="text-red-500 font-bold text-xs">※必須</span></label>
-          <input id="staffName" type="text" class="border border-black rounded h-[40px] text-lg"
-            v-model="staff.name" required>
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col">
+            <label for="staffName">名前<span class="text-red-500 font-bold text-xs">※必須</span></label>
+            <input id="staffName" type="text" class="border border-black rounded h-[40px] text-lg pl-2" v-model="staff.name" required>
+          </div>
+
+          <div class="flex flex-col">
+            <label for="staffType">タイプ<span class="text-red-500 font-bold text-xs">※必須</span></label>
+            <select id="staffType" v-model="staff.type" class="border border-black bg-white rounded h-[40px] text-lg pl-2">
+              <option v-for="type in staffTypes" :key="type.id" :value="type.id">
+                {{ type.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="flex flex-col">
+            <label for="staffName">時給<span class="text-red-500 font-bold text-xs">※必須</span></label>
+            <input id="staffName" type="text" class="border border-black rounded h-[40px] text-lg pl-2" v-model="staff.hourly_wage" required>
+          </div>
         </div>
         <SmButton v-if="!addMode" label="新規登録" class="px-4 py-1 mt-5 mr-3" @click="() => {
           addMode = true

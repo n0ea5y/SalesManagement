@@ -62,7 +62,7 @@
       <div class="max-h-[300px] overflow-y-auto">
         <table class="table-fixed w-full border-collapse">
           <tbody>
-            <tr v-for="(wholesaler, index) in wholesalers" :key="index" >
+            <tr v-for="wholesaler in wholesalers" :key="wholesaler.id" >
               <td class="p-1 border-t border-gray-300 flex items-center">{{ wholesaler.name }}
                 <span class="text-sm border rounded py-1 px-2 bg-yellow-200 ml-auto" @click="rowClick(wholesaler)">
                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <div class="w-[95%] mx-auto">
+    <div class="w-[95%] mt-10 mx-auto">
       <form @submit.prevent="addMode ? submit() : update()">
         <div class="flex flex-col">
           <label for="wholesalerName">卸売業者名<span class="text-red-500 font-bold text-xs">※必須</span></label>

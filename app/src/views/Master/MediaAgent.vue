@@ -62,7 +62,7 @@
       <div class="max-h-[300px] overflow-y-auto">
         <table class="table-fixed w-full border-collapse">
           <tbody>
-            <tr v-for="(agent, index) in mediaAgencies" :key="index" >
+            <tr v-for="agent in mediaAgencies" :key="agent.id" >
               <td class="p-1 border-t border-gray-300 flex items-center">{{ agent.name }}
                 <span class="text-sm border rounded py-1 px-2 bg-yellow-200 ml-auto" @click="rowClick(agent)">
                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <div class="w-[95%] mx-auto">
+    <div class="w-[95%] mt-10 mx-auto">
       <form @submit.prevent="addMode ? submit() : update()">
         <div class="flex flex-col">
           <label for="mediaAgentName">業者名 <span class="text-red-500 font-bold text-xs">※必須</span></label>
