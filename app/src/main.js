@@ -6,6 +6,17 @@ import router from './router'
 import './assets/main.css'
 import './assets/firebase.init'
 import { userStatus } from './stores/userStatus'
+// Vuetify 関連
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
+// Vuetify インスタンス作成
+const vuetify = createVuetify({
+  components,
+  directives,
+})
 
 // リロードしたときにログイン情報が消えるため下記でfirebaseから再取得している
 
@@ -33,6 +44,7 @@ onAuthStateChanged(auth, (user) => {
     })
 
     app.use(router)
+    app.use(vuetify)
     app.mount('#app')
   }
 })
