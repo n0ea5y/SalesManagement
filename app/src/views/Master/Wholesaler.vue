@@ -72,7 +72,7 @@
           addMode = true
           wholesaler = {};
         }" />
-        <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
+        <SmButton v-if="addMode" html-type="button" label="登録" class="px-4 py-1 mt-5" type="store" />
         <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
       </form>
     </div>

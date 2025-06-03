@@ -8,7 +8,11 @@
     label: {
       type: String,
       default: '送信',
-    }
+    },
+    htmlType: {
+      type: String,
+      default: 'submit',
+    },
   })
 
   const color = {
@@ -18,17 +22,17 @@
   };
 
   const emit = defineEmits(['click'])
-  const  handleClick = (val) => {
-    emit('click', val)
+  const  handleClick = () => {
+    emit('click')
   }
 </script>
 
 <template>
   <v-btn
     size="default"
+    :type="htmlType"
     :base-color="color[type]"
     @click="handleClick"
-
   >
   {{ label }}
   </v-btn>
