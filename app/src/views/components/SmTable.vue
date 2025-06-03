@@ -25,7 +25,7 @@
       :headers="headers"
       :items="items"
       class="bg-transparent max-h-[300px]"
-      :height="height"
+      :class="height"
       fixed-header
       hide-default-footer
     >
