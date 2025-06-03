@@ -12,9 +12,9 @@
   })
 
   const color = {
-    store: 'bg-blue-200',
-    update: 'bg-yellow-200',
-    delete: 'bg-red-200',
+    store: '#bfdbfe',
+    update: '#fef08a',
+    delete: '#fecaca',
   };
 
   const emit = defineEmits(['click'])
@@ -24,11 +24,12 @@
 </script>
 
 <template>
-  <button
-    class="border-2 border-gray-700 rounded-md p-2"
-    :class="color[props.type]"
-      @click="handleClick"
-    >
-    {{ label }}
-  </button>
+  <v-btn
+    size="default"
+    :base-color="color[type]"
+    @click="handleClick"
+
+  >
+  {{ label }}
+  </v-btn>
 </template>
