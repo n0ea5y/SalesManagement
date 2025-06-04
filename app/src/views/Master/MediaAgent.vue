@@ -6,7 +6,7 @@
   import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
   import { onMounted, ref } from 'vue';
   import { insertToast, updateToast } from '../Tools/Toast';
-
+  import { shallowRef } from 'vue'
 
   onMounted(async () => {
     await getMediaAgentMaster();
@@ -16,10 +16,12 @@
   const mediaAgent = ref({});
   const addMode = ref(true);
   const isLoaded = ref(false)
+  const dialog = shallowRef(false)
 
   const rowClick = (value) => {
     addMode.value = false;
     mediaAgent.value = { ...value };
+    dialog.value = true;
   }
 
   const submit = async () => {
@@ -27,6 +29,7 @@
       name: mediaAgent.value.name,
     });
     mediaAgent.value = {}
+    dialog.value = false;
     insertToast();
     getMediaAgentMaster();
   }
@@ -36,6 +39,7 @@
       name: mediaAgent.value.name,
     });
     mediaAgent.value = {}
+    dialog.value = false;
     getMediaAgentMaster();
     updateToast();
     addMode.value = true;
@@ -50,32 +54,43 @@
   }
 
   const headers = [
-    {title: '業者名', key: 'name', sortable: false},
-    {title: '', key: 'action', width: '10px', sortable: false},
+    { title: '業者名', key: 'name', sortable: false },
+    { title: '', key: 'action', width: '10px', sortable: false },
   ];
 </script>
 
 <template>
   <AuthLayout>
-      <SmTable
-        :headers="headers"
-        :items="mediaAgencies"
-        action @rowClick="(item) => {rowClick(item)}" />
+    <SmTable :headers="headers" :items="mediaAgencies" action @rowClick="(item) => { rowClick(item) }" />
+    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="() => {
+      addMode = true
+      mediaAgent = {};
+      dialog = true
+    }" />
 
-    <div class="w-[95%] mt-10 mx-auto">
-      <form @submit.prevent="addMode ? submit() : update()">
-        <div class="flex flex-col">
-          <label for="mediaAgentName">業者名 <span class="text-red-500 font-bold text-xs">※必須</span></label>
-          <input id="mediaAgentName" type="text" class="border border-black rounded h-[40px] text-lg"
-            v-model="mediaAgent.name" required>
-        </div>
-        <SmButton v-if="!addMode" label="新規登録" class="px-4 py-1 mt-5 mr-3" @click="() => {
-          addMode = true
-          mediaAgent = {};
-        }" />
-        <SmButton v-if="addMode" html-type="button" label="登録" class="px-4 py-1 mt-5" type="store" />
-        <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
-      </form>
+    <div class="pa-4 text-center">
+      <v-dialog v-model="dialog" max-width="80%">
+        <v-card prepend-icon="mdi-account" title="新規登録">
+
+          <div class="px-2 py-5 mx-auto">
+            <form @submit.prevent="addMode ? submit() : update()">
+              <div class="flex flex-col">
+                <label for="mediaAgentName">業者名 <span class="text-red-500 font-bold text-xs">※必須</span></label>
+                <input id="mediaAgentName" type="text"
+                  class="border border-black rounded h-[40px] w-[95%] text-lg mx-auto" v-model="mediaAgent.name"
+                  required>
+              </div>
+              <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => {
+                addMode = true
+                dialog = false
+                mediaAgent = {};
+              }" />
+              <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
+              <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
+            </form>
+          </div>
+        </v-card>
+      </v-dialog>
     </div>
   </AuthLayout>
 </template>

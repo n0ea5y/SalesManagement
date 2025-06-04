@@ -82,7 +82,7 @@
       <div v-if="menuOpen" class="fixed inset-0 z-40 md:hidden">
         <!-- 黒いマスク -->
         <div
-          class="absolute inset-0 bg-black bg-opacity-80"
+          class="absolute inset-0 bg-black/70"
           @click="closeMenu"
         ></div>
 

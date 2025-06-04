@@ -3,7 +3,7 @@
     type: {
       type: String,
       default: 'store',
-      validator: (value) => ['store', 'update', 'delete'].includes(value),
+      validator: (value) => ['store', 'update', 'delete', 'none'].includes(value),
     },
     label: {
       type: String,
@@ -19,6 +19,7 @@
     store: '#bfdbfe',
     update: '#fef08a',
     delete: '#fecaca',
+    none: '',
   };
 
   const emit = defineEmits(['click'])
