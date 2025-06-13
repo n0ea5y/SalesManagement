@@ -42,6 +42,11 @@ export default defineConfig({
             if (id.includes('lodash')) {
               return 'lodash-vendor'
             }
+            if (id.includes('vuetify')) {
+              if (id.includes('lab')) return 'vuetify-lab'
+              if (id.includes('components')) return 'vuetify-components'
+              return 'vuetify-core'
+            }
             // それ以外のnpmパッケージはさらに細分化可
             const directories = id.split('node_modules/')[1].split('/')
             const pkgName = directories[0].startsWith('@')

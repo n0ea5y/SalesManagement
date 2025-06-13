@@ -3,11 +3,11 @@ export const MEDIA_FIELDS = ['組数', '人数', '合計金額'];
 
 
 export const MEDIA_LIST = [
-  {name: 'Ratty', row: 'C'},
-  {name: 'hotpepper', row: 'F'},
-  {name: '食べログ', row: 'I'},
-  {name: 'ぐるなび', row: 'U'},
-  {name: 'フリー', row: 'X'},
-  {name: 'SNS', row: 'AA'},
-  {name: '外板', row: 'AD'},
+  {title: 'Ratty', kye: 'ratty'},
+  {title: 'hotpepper', kye: 'hotpepper'},
+  {title: '食べログ', kye: 'taberogu'},
+  {title: 'ぐるなび', kye: 'gurunabi'},
+  {title: 'フリー', kye: 'free'},
+  {title: 'SNS', kye: 'sns'},
+  {title: '外販', kye: 'gaihan'},
 ]
