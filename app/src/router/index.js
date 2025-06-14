@@ -37,6 +37,14 @@ const router = createRouter({
       },
       component: () => import('../views/Master/Staff.vue')
     },
+    {
+      path: '/inout',
+      name: 'inout',
+      meta:{
+        isPublic: true,
+      },
+      component: () => import('../views/InOut.vue')
+    },
     // {
     //   path: '/login',
     //   name: 'login',

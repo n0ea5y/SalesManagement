@@ -3,11 +3,13 @@
 </script>
 
 <template>
-  <div class="mb-4">
-    <HeaderView>
-    </HeaderView>
+  <div>
+    <div class="mb-4">
+      <HeaderView>
+      </HeaderView>
+    </div>
+    <main>
+      <slot></slot>
+    </main>
   </div>
-  <main>
-    <slot></slot>
-  </main>
 </template>

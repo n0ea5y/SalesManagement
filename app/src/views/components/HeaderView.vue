@@ -23,9 +23,10 @@
 </script>
 
 <template>
-  <nav class="p-4 bg-gray-200 flex items-center relative">
+  <nav class="p-4 bg-gray-200 flex gap-5 items-center relative">
     <!-- Always visible -->
     <router-link to="/" class="text-base font-bold">ホーム</router-link>
+    <router-link to="/inout" class="text-base font-bold">インアウト表</router-link>
 
     <!-- Hamburger or Close icon -->
     <button
