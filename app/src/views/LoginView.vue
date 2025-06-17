@@ -1,6 +1,6 @@
 <script setup>
-  import SmInput from '@/components/icons/SmInput.vue';
-  import SmButton from '@/components/icons/SmButton.vue';
+  import SmInput from '@/components/SmInput.vue';
+  import SmButton from '@/components/SmButton.vue';
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
   import { ref } from 'vue';
   import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';

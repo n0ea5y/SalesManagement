@@ -1,9 +1,9 @@
 <script setup>
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import SmButton from '@/components/icons/SmButton.vue';
-import SmTable from './components/SmTable.vue';
-import SmText from '@/components/icons/SmText.vue';
-import SmSelect from '@/components/icons/SmSelect.vue';
+import SmButton from '@/components/SmButton.vue';
+import SmTable from '../components/SmTable.vue';
+import SmText from '@/components/SmText.vue';
+import SmSelect from '@/components/SmSelect.vue';
 import { db } from '@/assets/firebase.init';
 import { collection, getDocs, setDoc, updateDoc, doc, query, where } from "firebase/firestore";
 import { onMounted, ref, watch } from 'vue';
@@ -132,8 +132,7 @@ const headers = [
 
 <template>
   <AuthLayout>
-    <h2 class="text-center font-bold">イン アウト表</h2>
-    <div class="w-1/2 mx-auto">
+    <div class="w-1/2 mx-auto m-[-10px]">
       <SmText type="date" bordernone v-model="today"></SmText>
     </div>
     <SmTable :headers="headers" :items="dailySales" inout action w_overflow @rowClick="(item) => { rowClick(item) }" />

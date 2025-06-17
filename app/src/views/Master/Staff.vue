@@ -1,7 +1,7 @@
 <script setup>
   import AuthLayout from '@/layouts/AuthLayout.vue';
-  import SmTable from '../components/SmTable.vue';
-  import SmButton from '@/components/icons/SmButton.vue';
+  import SmTable from '../../components/SmTable.vue';
+  import SmButton from '@/components/SmButton.vue';
   import { db } from '@/assets/firebase.init';
   import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
   import { onMounted, ref } from 'vue';
