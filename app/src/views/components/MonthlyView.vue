@@ -14,18 +14,20 @@
     const totalAmount = ref(null);
     const totalPeopleCount = ref(null);
     const mediaMonth = ref([]);
-    watch(() => yearMonth.value, (newVal) => {
-        getMonthlySalesSummary(newVal);
-    })
-
-    const getMonthlySalesSummary = async (yearMonth) => {
+    
+    watch(() => yearMonth.value, async (newVal) => {
+        const result = await getMonthlySalesSummary(newVal);
+        totalAmount.value = result.total;
+        totalPeopleCount.value = result.total_count;
+        mediaMonth.value = result.media;
+    });
+     const getMonthlySalesSummary = async (yearMonth) => {
+        reset();
         const colRef = collection(db, "daily_sales", yearMonth, "days");
         const querySnapshot = await getDocs(colRef);
-
         let total = 0;
         let totalCount = 0;
         const mediaMap = new Map();
-
         querySnapshot.forEach(doc => {
             const data = doc.data();
             total += data.total ?? 0;
@@ -36,17 +38,20 @@
             mediaMap.set(title, current + (value ?? 0));
             });
         });
-
         const media = Array.from(mediaMap.entries()).map(([title, value]) => ({ title, value }));
-
         return {
             total,
             total_count: totalCount,
             media
         };
     };
-    
 
+    const reset = () => {
+       totalAmount.value = 0;
+       totalPeopleCount.value = 0;
+       mediaMonth.value = [];
+    }
+    
     const headers = [
         { title: '媒体', key: 'title' },
         { title: '金額', key: 'value', sortable: false },

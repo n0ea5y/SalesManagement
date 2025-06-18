@@ -3,12 +3,17 @@
   import DailyView from './components/DailyView.vue';
   import MonthlyView from './components/MonthlyView.vue';
   import SmText from '@/components/SmText.vue';
-  import { ref } from 'vue';
+  import { ref, watch } from 'vue';
 
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const [year, month] = today.value.split('-');
-
   const yearMonth = ref(`${year}_${month}`);
+
+  watch(() => today.value, (newVal) => {
+    const [year, month] = newVal.split('-');
+    yearMonth.value = (`${year}_${month}`);
+  })
+
 </script>
 
 <template>
