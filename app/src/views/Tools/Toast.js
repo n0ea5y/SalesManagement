@@ -26,3 +26,15 @@
       "autoClose": 1800,
     })
   }
+  export function deleteToast(){
+    toast('削除完了', {
+      "theme": "colored",
+      "type": "error",
+      "position": "top-center",
+      "transition": "slide",
+      "dangerouslyHTMLString": true,
+      "hideProgressBar": true,
+      "icon": false,
+      "autoClose": 1800,
+    })
+  }

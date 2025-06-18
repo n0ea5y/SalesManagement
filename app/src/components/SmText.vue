@@ -12,7 +12,7 @@
       type: String,
       default: 'text',
     },
-    require: {
+    required: {
       type: Boolean,
       default: false,
     },
@@ -28,13 +28,13 @@
 <template>
   <v-text-field
     :class="props.class"
-    :require="require"
+    :required="required"
     :type="type"
     :variant="bordernone ? 'underlined' : 'outlined' "
     v-model="vModel"
     >
     <template #label>
-      <span v-if="require"><span class="text-red-500">※</span> {{ label }}</span>
+      <span v-if="required"><span class="text-red-500">※</span> {{ label }}</span>
       <span v-else>{{ label }}</span>
     </template>
   </v-text-field>

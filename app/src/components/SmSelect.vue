@@ -20,7 +20,7 @@
       type: Boolean,
       default: false,
     },
-    require:{
+    required:{
       type: Boolean,
       default: false,
     }
@@ -37,14 +37,14 @@
     :item-title="itemTitle"
     :item-value="itemValue"
     :return-object="returnObj"
-    :require="require"
+    :required="required"
     v-model="modelValue"
     variant="outlined"
     append-icon=""
 
   >
   <template #label>
-      <span v-if="require"><span class="text-red-500">※</span> {{ label }}</span>
+      <span v-if="required"><span class="text-red-500">※</span> {{ label }}</span>
       <span v-else>{{ label }}</span>
     </template>
 </v-select>
