@@ -112,6 +112,11 @@
       return sum + Number(amount ?? 0);
     }, 0);
 
+     // 合計金額
+    const total_count = dailySales.value.reduce((sum, { people_count  }) => {
+      return sum + Number(people_count  ?? 0);
+    }, 0);
+
     // 媒体別合計
     const mediaMap = new Map();
     dailySales.value.forEach(({ media_name, amount }) => {
@@ -123,7 +128,7 @@
     const media = Array.from(mediaMap.entries()).map(([title, value]) => ({ title, value }));
 
     // 格納
-    totalAmount.value = { total, media };
+    totalAmount.value = { total, media, total_count };
   }
 
   // 媒体全取得
