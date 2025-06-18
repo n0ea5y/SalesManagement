@@ -74,7 +74,9 @@
 
   // 当日の売上登録
   const totalAmountSubmit = async () => {
-    await setDoc(doc(db, 'daily_sales', today.value), totalAmount.value);
+    const [year, month, day] = today.value.split('-');
+    const yearMont = `${year}_${month}`;
+    await setDoc(doc(db, 'daily_sales', yearMont, 'days', day), totalAmount.value);
   }
 
   // 登録データ
