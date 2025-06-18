@@ -23,7 +23,8 @@
   const todaySale = ref({});
   const mediaAgencies = ref([]);
   const staffMaster = ref([]);
-  const totalAmount = ref(0);
+  const totalAmount = ref({});
+  const mediaTotals = ref({});
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const addMode = ref(true);
   const dialog = shallowRef(false)
@@ -73,10 +74,7 @@
 
   // 当日の売上登録
   const totalAmountSubmit = async () => {
-    const [year, month, day] = today.value.split('-');
-    await setDoc(doc(db, 'monthly_sales', `${year}-${month}`), {
-      total_amount: totalAmount.value,
-    });
+    await setDoc(doc(db, 'daily_sales', today.value), totalAmount.value);
   }
 
   // 登録データ
@@ -109,12 +107,23 @@
       ...doc.data(),
       staff_name: doc.data().staff_name ?? null,
     }));
-
-    // 合計金額を計算
-    totalAmount.value = dailySales.value.reduce((sum, sale) => {
-      const amount = Number(sale.amount ?? 0);
-      return sum + amount;
+     // 合計金額
+    const total = dailySales.value.reduce((sum, { amount }) => {
+      return sum + Number(amount ?? 0);
     }, 0);
+
+    // 媒体別合計
+    const mediaMap = new Map();
+    dailySales.value.forEach(({ media_name, amount }) => {
+      const media = media_name ?? '不明';
+      const amt = Number(amount ?? 0);
+      mediaMap.set(media, (mediaMap.get(media) || 0) + amt);
+    });
+
+    const media = Array.from(mediaMap.entries()).map(([title, value]) => ({ title, value }));
+
+    // 格納
+    totalAmount.value = { total, media };
   }
 
   // 媒体全取得
