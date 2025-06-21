@@ -24,7 +24,6 @@
   const mediaAgencies = ref([]);
   const staffMaster = ref([]);
   const totalAmount = ref({});
-  const mediaTotals = ref({});
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const addMode = ref(true);
   const dialog = shallowRef(false)
@@ -104,33 +103,59 @@
     const subCollection = collection(db, TABLE_NAME, today, SUB_COLLECTION);
     const querySnapshot = await getDocs(subCollection);
     count.value = (querySnapshot.size + 1).toString().padStart(3, '0');
+
     dailySales.value = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       staff_name: doc.data().staff_name ?? null,
     }));
+    console.log(dailySales.value[0])
      // 合計金額
     const total = dailySales.value.reduce((sum, { amount }) => {
       return sum + Number(amount ?? 0);
     }, 0);
 
-     // 合計金額
+     // 合計来店数
     const total_count = dailySales.value.reduce((sum, { people_count  }) => {
       return sum + Number(people_count  ?? 0);
     }, 0);
 
-    // 媒体別合計
     const mediaMap = new Map();
-    dailySales.value.forEach(({ media_name, amount }) => {
-      const media = media_name ?? '不明';
-      const amt = Number(amount ?? 0);
-      mediaMap.set(media, (mediaMap.get(media) || 0) + amt);
-    });
 
-    const media = Array.from(mediaMap.entries()).map(([title, value]) => ({ title, value }));
+dailySales.value.forEach(({ media_name, amount, people_count }) => {
+  const media = media_name ?? '不明';
+  const amt = Number(amount ?? 0);
+  const people = Number(people_count ?? 0);
+
+  if (!mediaMap.has(media)) {
+    mediaMap.set(media, {
+      media_amount: 0,      // 金額合計
+      people_count: 0,      // 人数合計
+      media_count: 0        // 出現回数（件数）
+    });
+  }
+
+  const current = mediaMap.get(media);
+  current.media_amount += amt;
+  current.people_count += people;
+  current.media_count += 1;
+
+  mediaMap.set(media, current); // 上書き
+});
+
+const media = Array.from(mediaMap.entries()).map(([media_name, data]) => ({
+  media_name,
+  media_amount: data.media_amount,
+  people_count: data.people_count,
+  media_count: data.media_count,
+}));
+
+// 👉 total_media_count を合計
+const total_media_count = media.reduce((sum, item) => sum + item.media_count, 0);
+
 
     // 格納
-    totalAmount.value = { total, media, total_count };
+    totalAmount.value = { total, media, total_count, total_media_count };
   }
 
   // 媒体全取得
