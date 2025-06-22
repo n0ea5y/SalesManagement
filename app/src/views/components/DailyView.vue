@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { getDoc, doc } from "firebase/firestore";
 import { db } from '@/assets/firebase.init';
+import DailySalesTarget from './DailySalesTarget.vue';
 
 onMounted(() => {
   getDailySalesMaster(today.value);
@@ -40,11 +41,7 @@ const formatNumber = (num) => {
 </script>
 <template>
   <div class="relative w-full py-2">
-    <p class="text-center">日別売上</p>
-    <router-link to="/store-daily-detail"
-      class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-500 hover:underline">
-      日別目標設定
-    </router-link>
+     <DailySalesTarget :today="today"></DailySalesTarget>
   </div>
   <v-data-table :items="mediaTotals" hide-default-header hide-default-footer
     class="bg-transparent max-h-[300px] w-full">

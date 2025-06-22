@@ -109,7 +109,6 @@
       ...doc.data(),
       staff_name: doc.data().staff_name ?? null,
     }));
-    console.log(dailySales.value[0])
      // 合計金額
     const total = dailySales.value.reduce((sum, { amount }) => {
       return sum + Number(amount ?? 0);
