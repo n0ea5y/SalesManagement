@@ -19,15 +19,12 @@ const mediaMonth = ref([]);
 
 const getMonthlySalesSummary = async (yearMonth) => {
     reset();
-
     const colRef = collection(db, "daily_sales", yearMonth, "days");
     const querySnapshot = await getDocs(colRef);
-
     let total = 0;
     let totalCount = 0;
     let totalMediaCount = 0;
     const mediaMap = new Map();
-
     querySnapshot.forEach(doc => {
         const data = doc.data();
         total += data.total ?? 0;
@@ -77,15 +74,6 @@ const formatNumber = (num) => {
 </script>
 
 <template>
-    <div class="relative w-full py-2">
-        <p class="text-center">月売上げ</p>
-        <router-link to="/store-monthly-detail"
-            class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-500 hover:underline">
-            月目標設定
-        </router-link>
-    </div>
-
-
     <v-data-table :items="mediaMonth" class="bg-transparent max-h-[300px]" hide-default-header hide-default-footer>
         <template v-slot:item="{ item }">
             <tr class="text-sm text-center border-b">
@@ -105,6 +93,4 @@ const formatNumber = (num) => {
                 <th class="py-1 px-3 w-4/12">{{ formatNumber(totalAmount) }}</th>
             </tr>
     </table>
-
-
 </template>

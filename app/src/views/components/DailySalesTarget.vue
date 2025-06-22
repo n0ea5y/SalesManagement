@@ -44,6 +44,7 @@ const yearMont = ref(null);
 const targetDay = ref(null);
 const dialog = ref(false);
 const addMode = ref(true);
+const emit = defineEmits(['action']);
 const dailyTargetLabel = computed(() => {
     return !dailyTarget.value ? '日別目標登録' : '日別目標更新';
 })
@@ -55,6 +56,7 @@ const submit = async () => {
     addMode.value ? insertToast() : updateToast();
     dialog.value = false;
     getDailyTarget(props.today)
+    emit('action');
 }
 
 const formatNumber = (num) => {

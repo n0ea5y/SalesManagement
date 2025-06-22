@@ -2,8 +2,6 @@
 import { onMounted, ref, watch } from 'vue';
 import { getDoc, doc } from "firebase/firestore";
 import { db } from '@/assets/firebase.init';
-import DailySalesTarget from './DailySalesTarget.vue';
-
 onMounted(() => {
   getDailySalesMaster(today.value);
 })
@@ -40,9 +38,6 @@ const formatNumber = (num) => {
 }
 </script>
 <template>
-  <div class="relative w-full py-2">
-     <DailySalesTarget :today="today"></DailySalesTarget>
-  </div>
   <v-data-table :items="mediaTotals" hide-default-header hide-default-footer
     class="bg-transparent max-h-[300px] w-full">
     <template v-slot:item="{ item }">
