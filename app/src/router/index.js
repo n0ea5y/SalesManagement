@@ -46,12 +46,12 @@ const router = createRouter({
       component: () => import('../views/InOut.vue')
     },
     {
-      path: '/store-daily-detail',
+      path: '/store-wholesaler-sales',
       name: 'storeDailyDetail',
       meta:{
         isPublic: true,
       },
-      component: () => import('../views/StoreDailyDetail.vue')
+      component: () => import('../views/WholesalerSales.vue')
     },
     {
       path: '/store-monthly-detail',

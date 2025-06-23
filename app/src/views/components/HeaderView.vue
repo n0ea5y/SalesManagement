@@ -27,6 +27,7 @@
     <!-- Always visible -->
     <router-link to="/" class="text-base font-bold">ホーム</router-link>
     <router-link to="/inout" class="text-base">インアウト表</router-link>
+    <router-link to="/store-wholesaler-sales" class="text-base">支払い関連</router-link>
 
     <!-- Hamburger or Close icon -->
     <button
