@@ -32,4 +32,4 @@ coverage
 .firebase
 /src/firebas
 
-src/assets
+**/firebase.init.js
