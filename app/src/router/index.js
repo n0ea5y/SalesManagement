@@ -61,6 +61,14 @@ const router = createRouter({
       },
       component: () => import('../views/StoreMonthlyDetail.vue')
     },
+    {
+      path: '/staff-shift-input',
+      name: 'staffShiftInput',
+      meta:{
+        isPublic: true,
+      },
+      component: () => import('../views/StaffShiftInput.vue')
+    },
     // {
     //   path: '/login',
     //   name: 'login',
