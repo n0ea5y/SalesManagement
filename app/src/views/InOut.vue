@@ -1,243 +1,204 @@
 <script setup>
   import AuthLayout from '@/layouts/AuthLayout.vue';
   import SmButton from '@/components/SmButton.vue';
-  import SmTable from '../components/SmTable.vue';
-  import SmText from '@/components/SmText.vue';
   import SmSelect from '@/components/SmSelect.vue';
+  import SmText from '@/components/SmText.vue';
+  import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, PLANS, YES_NO_OPTIONS } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
-  import { collection, getDocs, setDoc, updateDoc, doc, query, where, deleteDoc } from "firebase/firestore";
-  import { onMounted, ref, watch } from 'vue';
+  import { collection, getDocs, setDoc, updateDoc, where, doc, query, deleteDoc } from "firebase/firestore";
+  import { computed, onMounted, ref } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
-  import { shallowRef } from 'vue'
+  import { zeroPadding } from './Tools/format';
 
-  onMounted(async () => {
-    await getDailySalesMaster(today.value);
-    await getMediaAgentMaster();
-    await getStaffMaster();
-  });
-
-  const TABLE_NAME = 'sales';
-  const SUB_COLLECTION = 'records';
-
-  const dailySales = ref([]);
-  const todaySale = ref({});
-  const mediaAgencies = ref([]);
-  const staffMaster = ref([]);
-  const totalAmount = ref({});
-  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
-  const addMode = ref(true);
-  const dialog = shallowRef(false)
-  const count = ref(null);
-
-  // 日付が変わったらデータの取得を行う
-  watch(() => today.value, (newVal) => {
-    getDailySalesMaster(newVal);
+  onMounted(() => {
+    getMediaAgencies();
+    getSalesRecords();
+    getStaff();
   })
 
-  // 更新ボタンが押されたら処理
-  const rowClick = (value) => {
-    addMode.value = false;
-    todaySale.value = { ...value };
-    dialog.value = true;
+  const dialog = ref(false)         //ダイアログ開閉フラグ
+  const salesRecords = ref({});     // 登録データ格納
+  const salesRecordItems = ref([]); // 登録データ一覧格納
+  const mediaAgencies = ref([]);    // 担当者格納
+  const staffItem = ref([]);        // スタッフ一覧格納
+  const count = ref(0);             // 登録数格納
+  const addMode = ref(true);
+  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }))
+  const [year, month, dayValue] = today.value.split('/')
+  const yearMonth = computed(() => `${year}_${month}`)
+  const day = computed(() => dayValue)
+  
+  // テーブルヘッダー
+  const headers = [
+    {title: '入店時間', key: 'entry_time'},
+    {title: '卓番', key: 'table_number'},
+    {title: '担当者', key: 'staff_in_charge'},
+    {title: 'スタッフ名', key: 'staff_id'},
+    {title: '人数', key: 'guest_count'},
+    {title: 'プラン', key: 'plan'},
+    {title: 'お通し', key: 'otoshi'},
+    {title: 'フード数', key: 'food_count'},
+    {title: '金額', key: 'amount'},
+    {title: '', key: 'btn-area'},
+  ];
 
-    totalAmountSubmit();
+  // テーブルrowクリック時
+  const rowClick = (item) => {
+    salesRecords.value = { ...item }
+    dialog.value = true
+    addMode.value = false
   }
 
   // 登録処理
   const submit = async () => {
-    await setDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, count.value), getSalePayload());
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
+    await setDoc(doc(db, "daily_sales", yearMonth.value, day.value, zeroPadding(count.value, 3)), salesRecords.value);
+    getSalesRecords();
+    dialog.value = false
     insertToast();
   }
 
   // 更新処理
   const update = async () => {
-    await updateDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, todaySale.value.id), getSalePayload());
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
+    const docRef = doc(db, "daily_sales", yearMonth.value, day.value, salesRecords.value.id);
+    await updateDoc(docRef, salesRecords.value);
+    getSalesRecords();
+    dialog.value = false
     updateToast();
-    addMode.value = true;
   }
-
+  
   // 削除処理
-  const remove = async (value) => {
-    const result = confirm('本当に削除しても良いですか？');
-    if (!result) return;
-    await deleteDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, value.id));
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
-    deleteToast();
-    addMode.value = true;
-  };
-
-  // 当日の売上登録
-  const totalAmountSubmit = async () => {
-    const [year, month, day] = today.value.split('-');
-    const yearMont = `${year}_${month}`;
-    await setDoc(doc(db, 'daily_sales', yearMont, 'days', day), totalAmount.value);
+  const remove = async (v) => {
+    const deleteFlag = confirm('ほんとうにさくじょしてもよいですか？')
+    if(deleteFlag){
+      const docRef = doc(db, "daily_sales", yearMonth.value, day.value, v.id);
+      await deleteDoc(docRef);
+      getSalesRecords();
+      deleteToast();
+    }
+    dialog.value = false
+    
   }
 
-  // 登録データ
-  const getSalePayload = () => ({
-    'in_time': todaySale.value.in_time,
-    'table_number': todaySale.value.table_number,
-    'media_name': todaySale.value.media_name,
-    'staff_name': todaySale.value.staff_name ?? null,
-    'people_count': todaySale.value.people_count,
-    'plan': todaySale.value.plan,
-    'otoshi': todaySale.value.otoshi,
-    'food': todaySale.value.food,
-    'amount': todaySale.value.amount ?? null,
-  })
-
-  // 登録、更新後に行う処理
-  const afterSubmitOrUpdate = async () => {
-    todaySale.value = {}
-    dialog.value = false;
-    await getDailySalesMaster(today.value);
-  }
-
-  // 日別データ取得
-  const getDailySalesMaster = async (today) => {
-    const subCollection = collection(db, TABLE_NAME, today, SUB_COLLECTION);
-    const querySnapshot = await getDocs(subCollection);
-    count.value = (querySnapshot.size + 1).toString().padStart(3, '0');
-
-    dailySales.value = querySnapshot.docs.map(doc => ({
+  // 登録データ一覧取得
+  const getSalesRecords  = async () => {
+    const docRef = collection(db, 'daily_sales', yearMonth.value, day.value);
+    const querySnapshot = await getDocs(docRef);
+    salesRecordItems.value = querySnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data(),
-      staff_name: doc.data().staff_name ?? null,
+      ...doc.data()
     }));
-     // 合計金額
-    const total = dailySales.value.reduce((sum, { amount }) => {
-      return sum + Number(amount ?? 0);
-    }, 0);
 
-     // 合計来店数
-    const total_count = dailySales.value.reduce((sum, { people_count  }) => {
-      return sum + Number(people_count  ?? 0);
-    }, 0);
-
-    const mediaMap = new Map();
-
-dailySales.value.forEach(({ media_name, amount, people_count }) => {
-  const media = media_name ?? '不明';
-  const amt = Number(amount ?? 0);
-  const people = Number(people_count ?? 0);
-
-  if (!mediaMap.has(media)) {
-    mediaMap.set(media, {
-      media_amount: 0,      // 金額合計
-      people_count: 0,      // 人数合計
-      media_count: 0        // 出現回数（件数）
-    });
+    // 登録数のカウント(0なら1,0以外なら登録数+1)
+    count.value = querySnapshot.size ? querySnapshot.size + 1 : 1;
   }
 
-  const current = mediaMap.get(media);
-  current.media_amount += amt;
-  current.people_count += people;
-  current.media_count += 1;
-
-  mediaMap.set(media, current); // 上書き
-});
-
-const media = Array.from(mediaMap.entries()).map(([media_name, data]) => ({
-  media_name,
-  media_amount: data.media_amount,
-  people_count: data.people_count,
-  media_count: data.media_count,
-}));
-
-// 👉 total_media_count を合計
-const total_media_count = media.reduce((sum, item) => sum + item.media_count, 0);
-
-
-    // 格納
-    totalAmount.value = { total, media, total_count, total_media_count };
-  }
-
-  // 媒体全取得
-  const getMediaAgentMaster = async () => {
+  // メディアエージェント一覧取得
+  const getMediaAgencies = async () => {
     const querySnapshot = await getDocs(collection(db, "media_agencies"));
     mediaAgencies.value = querySnapshot.docs.map((doc) => {
-      return { 'key': doc.id, 'title': doc.data().name };
+      return {key: doc.id, title: doc.data().name}
     });
   }
 
-  // スタッフ取得
-  const getStaffMaster = async () => {
+  // スタッフ一覧取得(typeが1以外)
+  const getStaff = async () => {
     const q = query(collection(db, "staff"), where("type", "!=", "1"));
     const querySnapshot = await getDocs(q);
-    staffMaster.value = querySnapshot.docs.map((doc) => {
-      return { 'key': doc.id, 'title': doc.data().name };
-    });
+    staffItem.value = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   }
 
-  const headers = [
-    { title: 'IN', key: 'in_time' },
-    { title: '卓番', key: 'table_number', sortable: false },
-    { title: '担当者', key: 'media_name', sortable: false },
-    { title: 'スタッフ名', key: 'staff_name', sortable: false },
-    { title: '人数', key: 'people_count', sortable: false },
-    { title: 'プラン', key: 'plan', sortable: false },
-    { title: 'お通し', key: 'otoshi', sortable: false },
-    { title: 'F', key: 'food', sortable: false },
-    { title: '金額', key: 'amount', sortable: false },
-    { title: '', key: 'action', width: '10px', sortable: false },
-  ];
+  // テーブルrow表示(担当者)
+  function getMediaAgentTitleByKey(key) {
+    const found = mediaAgencies.value.find(item => item.key === key);
+    return found ? found.title : null; 
+  }
+
+  // テーブルrow表示(スタッフ)
+  function getStaffNameMapping(key) {
+    const found = staffItem.value.find(item => item.id === key);
+    return found ? found.name : null;
+  }
+
+  // 三桁区切り
+  const formatWithCommas = (v) => {
+    if(!v) return;
+    return '￥' + Number(v).toLocaleString() + '円';
+  }
 </script>
 
 <template>
   <AuthLayout>
-    <div class="w-1/2 mx-auto m-[-10px]">
-      <SmText type="date" bordernone v-model="today"></SmText>
+    <div class="flex overflow-x-auto">
+      <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems">
+       <template v-slot:item="{item}">
+        <tr :class="[!item.amount ? 'bg-red-200': '']">
+          <td>{{ item.entry_time }}</td>
+          <td>{{ item.table_number }}</td>
+          <td>{{ getMediaAgentTitleByKey(item.staff_in_charge) }}</td>
+          <td>{{ getStaffNameMapping(item.staff_id) }}</td>
+          <td>{{ item.guest_count }}</td>
+          <td>{{ item.plan }}</td>
+          <td>{{ item.otoshi }}</td>
+          <td>{{ item.food_count }}</td>
+          <td>{{ formatWithCommas(item.amount)}}</td>
+          <td>
+            <div class="flex gap-5">
+              <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="error" @click="() => { remove(item) }">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M6 7h12M9 7v10a2 2 0 0 0 4 0V7M5 7h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7zM10 4h4m-3 0V3a1 1 0 1 0-2 0v1m6 0V3a1 1 0 1 0-2 0v1" />
+                </svg>
+              </v-btn>
+
+              <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="#fef08a" @click="() => { rowClick(item) }">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                </svg>
+              </v-btn>
+
+            </div>
+          </td>
+        </tr>
+       </template> 
+      </v-data-table>
     </div>
-    <SmTable :headers="headers" :items="dailySales" height="800px" inout action w_overflow
-      @rowClick="(item) => { rowClick(item) }" @deleteRow="(item) => { remove(item) }" />
+
     <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="() => {
       addMode = true
-      todaySale = {};
+      salesRecords = {};
       dialog = true
     }" />
-
-    <v-dialog v-model="dialog" max-width="80%">
-      <v-card prepend-icon="mdi-account" title="インアウト表入力">
-        <div class="w-full pb-5 px-2 mx-auto">
-          <form @submit.prevent="addMode ? submit() : update()">
-            <div class="flex flex-col w-full">
-              <div class="flex gap-5 mb-4">
-                <label for="timer" class="flex items-center">IN</label>
-                <input id="timer" type="time" class="h-[60px] border rounded w-[180px]" v-model="todaySale.in_time"
-                  required />
-              </div>
-              <SmSelect label="担当者" :items="mediaAgencies" itemValue="name" v-model="todaySale.media_name" required>
-              </SmSelect>
-              <SmSelect v-if="todaySale.media_name == '外販'" label="スタッフ名" :items="staffMaster"
-                v-model="todaySale.staff_name" itemValue="name" :required="todaySale.media_name == '外販'"></SmSelect>
-              <SmText label="プラン" v-model="todaySale.plan" required></SmText>
-              <div class="flex flex-wrap">
-                <div class="flex gap-2 w-full">
-                  <SmText label="卓番" v-model="todaySale.table_number" required></SmText>
-                  <SmText label="お通し" v-model="todaySale.otoshi" required></SmText>
-                </div>
-                <div class="flex gap-2 w-full">
-                  <SmText label="F" v-model="todaySale.food" required></SmText>
-                  <SmText label="人数" v-model="todaySale.people_count" required></SmText>
-                </div>
-              </div>
-              <SmText label="金額" v-model="todaySale.amount"></SmText>
-            </div>
-            <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => {
+    <v-dialog v-model="dialog">
+      <form @submit.prevent="addMode ? submit() : update()">
+        <v-card class="flex flex-col gap-5 py-4 px-2">
+          <div class="flex gap-5">
+            <label for="time">入店時間</label>
+            <input id="time" type="time" v-model="salesRecords.entry_time">
+          </div>
+          <SmSelect label="卓番" :items="TABLE_NUMBER" v-model="salesRecords.table_number" required></SmSelect>
+          <SmSelect label="担当者" :items="mediaAgencies" v-model="salesRecords.staff_in_charge" required></SmSelect>
+          <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.media_agent === GAIHAN_ID"></SmSelect>
+          <SmSelect label="人数" :items="GET_NUMBER(50)" v-model="salesRecords.guest_count" required></SmSelect>
+          <SmSelect label="プラン" :items="PLANS" v-model="salesRecords.plan" required></SmSelect>
+          <SmSelect label="お通し" :items="YES_NO_OPTIONS" v-model="salesRecords.otoshi" required></SmSelect>
+          <SmSelect label="フード数" :items="GET_NUMBER(10)" v-model="salesRecords.food_count" required></SmSelect>
+          <SmText label="金額" :bordernone="false" v-model="salesRecords.amount"></SmText>
+          <div class="flex justify-end gap-2">
+            <SmButton :label="addMode ? '登録' : 'こうしん'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
+            <SmButton label="とじる" htmlType="button" class="px-4 py-1 mt-5 mr-3 ml-2" type="none" @click="() => {
               addMode = true
+              salesRecords = {};
               dialog = false
-              todaySale = {};
             }" />
-            <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
-            <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
-          </form>
-        </div>
-      </v-card>
+          </div>
+        </v-card>
+      </form>
     </v-dialog>
   </AuthLayout>
 </template>
