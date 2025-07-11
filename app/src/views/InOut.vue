@@ -23,10 +23,9 @@
   const staffItem = ref([]);        // スタッフ一覧格納
   const count = ref(0);             // 登録数格納
   const addMode = ref(true);
-  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }))
-  const [year, month, dayValue] = today.value.split('/')
-  const yearMonth = computed(() => `${year}_${month}`)
-  const day = computed(() => dayValue)
+  // const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }))
+  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
+  const yearMonthDay = computed(() => today.value.replaceAll('-', '_'))
   
   // テーブルヘッダー
   const headers = [
@@ -51,7 +50,7 @@
 
   // 登録処理
   const submit = async () => {
-    await setDoc(doc(db, "daily_sales", yearMonth.value, day.value, zeroPadding(count.value, 3)), salesRecords.value);
+    await setDoc(doc(db, "daily_sales", yearMonthDay.value, 'records', zeroPadding(count.value, 3)), salesRecords.value);
     getSalesRecords();
     dialog.value = false
     insertToast();
@@ -59,7 +58,7 @@
 
   // 更新処理
   const update = async () => {
-    const docRef = doc(db, "daily_sales", yearMonth.value, day.value, salesRecords.value.id);
+    const docRef = doc(db, "daily_sales", yearMonthDay.value, 'records', salesRecords.value.id);
     await updateDoc(docRef, salesRecords.value);
     getSalesRecords();
     dialog.value = false
@@ -70,7 +69,7 @@
   const remove = async (v) => {
     const deleteFlag = confirm('ほんとうにさくじょしてもよいですか？')
     if(deleteFlag){
-      const docRef = doc(db, "daily_sales", yearMonth.value, day.value, v.id);
+      const docRef = doc(db, "daily_sales", yearMonthDay.value, 'records', v.id);
       await deleteDoc(docRef);
       getSalesRecords();
       deleteToast();
@@ -81,7 +80,7 @@
 
   // 登録データ一覧取得
   const getSalesRecords  = async () => {
-    const docRef = collection(db, 'daily_sales', yearMonth.value, day.value);
+    const docRef = collection(db, 'daily_sales', yearMonthDay.value, 'records');
     const querySnapshot = await getDocs(docRef);
     salesRecordItems.value = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -131,6 +130,9 @@
 
 <template>
   <AuthLayout>
+    <div class="w-1/2 mx-auto m-[-10px]">
+      <SmText type="date" bordernone v-model="today"></SmText>
+    </div>
     <div class="flex overflow-x-auto">
       <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems">
        <template v-slot:item="{item}">
