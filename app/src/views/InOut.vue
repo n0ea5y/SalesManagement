@@ -6,7 +6,7 @@
   import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, PLANS, YES_NO_OPTIONS } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
   import { collection, getDocs, setDoc, updateDoc, where, doc, query, deleteDoc } from "firebase/firestore";
-  import { computed, onMounted, ref } from 'vue';
+  import { computed, onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
   import { zeroPadding } from './Tools/format';
 
@@ -23,9 +23,15 @@
   const staffItem = ref([]);        // スタッフ一覧格納
   const count = ref(0);             // 登録数格納
   const addMode = ref(true);
-  // const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }))
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const yearMonthDay = computed(() => today.value.replaceAll('-', '_'))
+  const year = computed(() => today.value.split('-')[0])
+  const month = computed(() => today.value.split('-')[1])
+  const day = computed(() => today.value.split('-')[2])
+
+  watch(today, (newVal, oldVal) => {
+    getSalesRecords();
+  })
   
   // テーブルヘッダー
   const headers = [
@@ -50,7 +56,7 @@
 
   // 登録処理
   const submit = async () => {
-    await setDoc(doc(db, "daily_sales", yearMonthDay.value, 'records', zeroPadding(count.value, 3)), salesRecords.value);
+    await setDoc(doc(db, "daily_sales", year.value, month.value, day.value, 'records', zeroPadding(count.value, 3)), salesRecords.value);
     getSalesRecords();
     dialog.value = false
     insertToast();
@@ -58,7 +64,7 @@
 
   // 更新処理
   const update = async () => {
-    const docRef = doc(db, "daily_sales", yearMonthDay.value, 'records', salesRecords.value.id);
+    const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', salesRecords.value.id);
     await updateDoc(docRef, salesRecords.value);
     getSalesRecords();
     dialog.value = false
@@ -69,7 +75,7 @@
   const remove = async (v) => {
     const deleteFlag = confirm('ほんとうにさくじょしてもよいですか？')
     if(deleteFlag){
-      const docRef = doc(db, "daily_sales", yearMonthDay.value, 'records', v.id);
+      const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', v.id);
       await deleteDoc(docRef);
       getSalesRecords();
       deleteToast();
@@ -80,7 +86,7 @@
 
   // 登録データ一覧取得
   const getSalesRecords  = async () => {
-    const docRef = collection(db, 'daily_sales', yearMonthDay.value, 'records');
+    const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
     const querySnapshot = await getDocs(docRef);
     salesRecordItems.value = querySnapshot.docs.map(doc => ({
       id: doc.id,

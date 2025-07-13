@@ -3,31 +3,20 @@
   import DailyView from './components/DailyView.vue';
   import MonthlyView from './components/MonthlyView.vue';
   import SmText from '@/components/SmText.vue';
-  import DailySalesTarget from './components/DailySalesTarget.vue';
-  import { onMounted, ref, watch } from 'vue';
-  import { getDailyTargetSum } from './Tools/getData';
+  import { computed, ref, watch } from 'vue';
 
-  onMounted(async () => {
-    dailyTargetTotal.value = await getDailyTargetSum(yearMonth.value)
-  })
-
+  const monthlyViewRef = ref(null)
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
-  const [year, month] = today.value.split('-');
-  const yearMonth = ref(`${year}_${month}`);
-  const dailyTargetTotal = ref(null);
+  const year = computed(() => today.value.split('-')[0])
+  const month = computed(() => today.value.split('-')[1])
+  const day = computed(() => today.value.split('-')[2])
 
-  watch(() => today.value, (newVal) => {
-    const [year, month] = newVal.split('-');
-    yearMonth.value = (`${year}_${month}`);
+  watch(month, async ()  => {
+   await monthlyViewRef.value.getTodaySalesTarget(year.value, month.value);
   })
 
-  const action = async () => {
-    dailyTargetTotal.value = await getDailyTargetSum(yearMonth.value)
-  }
-
-  const formatNumber = (num) => {
-      if (num == null || num === '') return ''
-      return '￥' + Number(num).toLocaleString() + '円'
+  const actions = async () => {
+   await monthlyViewRef.value.getTodaySalesTarget(year.value, month.value);
   }
 </script>
 
@@ -38,17 +27,12 @@
     </div>
     <v-card class="w-[95%] px-2 py-2 mb-10 mx-auto">
     <!-- 日別売上 -->
-      <DailySalesTarget :today="today" @action="action"></DailySalesTarget>
-      <DailyView  v-model:today="today"/>
+      <DailyView  v-model:year="year" v-model:month="month" v-model:day="day" @actions="actions()"/>
     </v-card>
 
     <v-card class="w-[95%] px-2 py-2 mx-auto">
     <!-- つき売上 -->
-      <div class="relative w-full py-2">
-        <p class="mr-auto">月売上目標：{{ dailyTargetTotal ? formatNumber(dailyTargetTotal) : '登録されていません' }}</p>
-
-      </div>
-      <MonthlyView v-model:yearMonth="yearMonth"/>
+      <MonthlyView ref="monthlyViewRef" v-model:year="year" v-model:month="month"/>
     </v-card>
   </AuthLayout>
 </template>
