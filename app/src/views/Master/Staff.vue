@@ -18,9 +18,11 @@
   const addMode = ref(true);
   const isLoaded = ref(false)
   const dialog = shallowRef(false)
+  const numbers = [...Array(16).keys()].map(i => String(i + 10 + '%')); // '01' 〜 '31'
 
   const rowClick = (value) => {
     addMode.value = false;
+    console.log(value)
     staff.value = { ...value };
     dialog.value = true;
   }
@@ -29,6 +31,7 @@
     await addDoc(collection(db, "staff"), {
       name: staff.value.name,
       type: staff.value.type,
+      commissionRate: staff.value.commissionRate,
       hourly_wage: staff.value.hourly_wage,
     });
     staff.value = {}
@@ -41,6 +44,7 @@
     await updateDoc(doc(db, "staff", staff.value.id), {
       name: staff.value.name,
       type: staff.value.type,
+      commissionRate: staff.value.commissionRate,
       hourly_wage: staff.value.hourly_wage,
     });
     staff.value = {}
@@ -53,7 +57,7 @@
   const getStaffMaster = async () => {
     const querySnapshot = await getDocs(collection(db, "staff"));
     staffMaster.value = querySnapshot.docs.map((doc) => {
-      return { 'id': doc.id, 'name': doc.data().name, 'type': doc.data().type, 'hourly_wage': doc.data().hourly_wage };
+      return { 'id': doc.id, 'name': doc.data().name, 'type': doc.data().type, 'hourly_wage': doc.data().hourly_wage, 'commissionRate': doc.data().commissionRate };
     });
     isLoaded.value = true;
   }
@@ -68,6 +72,7 @@
     { title: '名前', key: 'name', width: '100px', sortable: false },
     { title: '時給', key: 'hourly_wage', width: '100px', sortable: false },
     { title: 'タイプ', key: 'type', width: '100px', sortable: false },
+    { title: '歩合', key: 'commissionRate', width: '100px', sortable: false },
     { title: '', key: 'action', width: '10px', sortable: false },
   ];
 
@@ -146,11 +151,23 @@
                   </select>
                 </div>
 
+
+
                 <div class="flex flex-col">
                   <label for="staffName">時給<span class="text-red-500 font-bold text-xs">※必須</span></label>
                   <input id="staffName" type="text"
                     class="border border-black rounded h-[40px] w-[95%] mx-auto text-lg pl-2"
                     v-model="staff.hourly_wage" required>
+                </div>
+
+                <div class="flex flex-col" v-if="staff.type != 1">
+                  <label for="staffType">タイプ<span class="text-red-500 font-bold text-xs">※必須</span></label>
+                  <select id="staffType" v-model="staff.commissionRate"
+                    class="border border-black bg-white rounded h-[40px] w-[95%] mx-auto text-lg pl-2">
+                    <option v-for="num in numbers" :key="num" :value="num">
+                      {{ num }}
+                    </option>
+                  </select>
                 </div>
               </div>
               <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => {

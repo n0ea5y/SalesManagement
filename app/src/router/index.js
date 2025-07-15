@@ -69,6 +69,14 @@ const router = createRouter({
       },
       component: () => import('../views/StaffShiftInput.vue')
     },
+    {
+      path: '/catch-staff-sales',
+      name: 'catchStaffSales',
+      meta:{
+        isPublic: true,
+      },
+      component: () => import('../views/CatchStaffSales.vue')
+    },
     // {
     //   path: '/login',
     //   name: 'login',

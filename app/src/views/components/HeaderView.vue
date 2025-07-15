@@ -29,6 +29,7 @@
     <router-link to="/inout" class="text-base">インアウト表</router-link>
     <router-link to="/store-wholesaler-sales" class="text-base">支払い関連</router-link>
     <router-link to="/staff-shift-input" class="text-base">勤怠</router-link>
+    <router-link to="/catch-staff-sales" class="text-base">外販売上</router-link>
 
     <!-- Hamburger or Close icon -->
     <button
