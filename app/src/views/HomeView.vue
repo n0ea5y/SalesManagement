@@ -23,7 +23,6 @@
 
 <template>
   <AuthLayout>
-    <SmExcelBtn label="ExcelDL" :year=year :month="month"></SmExcelBtn>
     <div class="w-[50%] mx-auto mt-[-10px]">
       <SmText type="date" bordernone v-model="today"></SmText>
     </div>
@@ -36,5 +35,8 @@
     <!-- つき売上 -->
       <MonthlyView ref="monthlyViewRef" v-model:year="year" v-model:month="month"/>
     </v-card>
+    <div class="text-end w-[98%] px-2 mt-[20px]">
+      <SmExcelBtn label="ExcelDL" :year=year :month="month"></SmExcelBtn>
+    </div>
   </AuthLayout>
 </template>

@@ -2,6 +2,7 @@
   import AuthLayout from '@/layouts/AuthLayout.vue';
   import SmButton from '@/components/SmButton.vue';
   import SmSelect from '@/components/SmSelect.vue';
+  import SmText from '@/components/SmText.vue';
   import { onMounted, ref, watch } from 'vue';
   import { db } from '@/assets/firebase.init';
   import { collection, getDocs, query, where, addDoc, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
@@ -16,7 +17,6 @@
   const SUB_COLLECTION = 'records';
   const count = ref("001");
 
-  const hourlyWage = ref(null);
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const dialog = ref(false);
   const staffhourlywage = ref({});
@@ -31,6 +31,11 @@
     { title: '給与', key: 'hourlyWage' },
     { title: '' },
   ];
+
+  watch(today, async (newVal, oldVal) => {
+    await getStaffHoulyWagePayload(today.value);
+  })
+  
 
   // 更新ボタンが押されたら処理
   const rowClick = (value) => {
@@ -155,6 +160,9 @@ const times = Array.from({ length: 41 }, (_, i) => {
 
 <template>
   <AuthLayout>
+    <div class="w-1/2 mx-auto m-[-10px]">
+      <SmText type="date" bordernone v-model="today"></SmText>
+    </div>
     <div class=" overflow-x-auto">
       <v-data-table 
         :headers="headers" 

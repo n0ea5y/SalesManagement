@@ -24,7 +24,6 @@
   const count = ref(0);             // 登録数格納
   const addMode = ref(true);
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
-  const yearMonthDay = computed(() => today.value.replaceAll('-', '_'))
   const year = computed(() => today.value.split('-')[0])
   const month = computed(() => today.value.split('-')[1])
   const day = computed(() => today.value.split('-')[2])

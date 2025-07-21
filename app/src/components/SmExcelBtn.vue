@@ -35,6 +35,9 @@ const props = defineProps({
     type: String,
   },
 
+  color: {
+    type: String,
+  },
   year: {
     type: String,
   },
@@ -45,10 +48,6 @@ const props = defineProps({
 
 const execlDL = async () => {
   isLoading.value = true
-  // const daysInMonth = new Date(props.year, props.month, 0).getDate()
-  // const days = [...Array(daysInMonth)].map((_, i) => i + 1)
-
-  // getAllRecords(days, props.year, props.month)
   const [data, targetData, staffList, wholesalersData, daily_salary] = await getSelectMonthDayData(props.year, props.month)
   const response = await fetch('/omiya_template.xlsx')
   const arrayBuffer = await response.arrayBuffer()
@@ -118,7 +117,6 @@ for (const [key, value] of Object.entries(wholesalersData)) {
   });
   // =============================================
 
-
   // 4. バッファへ書き出し
   const buffer = await workbook.xlsx.writeBuffer()
 
@@ -164,7 +162,6 @@ const getAllRecords = async (dates, year, month) => {
 
   return allData;
 };
-
 
 // きゃっちよう
 const getStaff = async (days, year, month) => {
@@ -315,7 +312,6 @@ const getTest = async (days, year, month) => {
   return mediaList
 }
 
-
 // いんくりめとかんすう
 function incrementExcelColumn(col) {
   let carry = 1
@@ -340,15 +336,14 @@ function incrementExcelColumn(col) {
 </script>
 
 <template>
-  <v-btn @click="execlDL">{{ label }}</v-btn>
+  <v-btn color="green" @click="execlDL">{{ label }}</v-btn>
   <div
     v-if="isLoading"
-    class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-xl shadow-xl bg-gray-500 bg-opacity-30 flex justify-center items-center z-50"
+    class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-xl shadow-md bg-gray-500 bg-opacity-90 flex justify-center items-center z-50"
   >
     <div class="flex flex-col items-center">
       <Loading :active="isLoading" :is-full-page="false" />
-      <p>だうんろーどしています...</p>
+      <p class="text-white font-bold text-xl mt-[20px]">だうんろーどしています...</p>
     </div>
   </div>
-  {{ staffWages }}
 </template>
