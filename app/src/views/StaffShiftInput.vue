@@ -133,7 +133,7 @@ const times = Array.from({ length: 41 }, (_, i) => {
     const q = query(collection(db, "staff"), where("type", "!=", "2"));
     const querySnapshot = await getDocs(q);
     staffMaster.value = querySnapshot.docs.map((doc) => {
-      return { 'key': doc.data().name, 'title': doc.data().name, 'hourly_wage': doc.data().hourly_wage };
+      return { 'key': doc.id, 'name': doc.data().name, 'title': doc.data().name, 'hourly_wage': doc.data().hourly_wage };
     });
   }
   const formatNumber = (num) => {
@@ -142,6 +142,14 @@ const times = Array.from({ length: 41 }, (_, i) => {
   }
   const test = (item) => {
     console.log(item);
+  }
+
+  const staffMapping = (v) => {
+    if (!staffMaster.value) return ''
+
+    const list = Object.values(staffMaster.value)
+    const match = list.find(item => item.key === v)
+    return match ? match.name : ''
   }
 </script>
 
@@ -157,7 +165,7 @@ const times = Array.from({ length: 41 }, (_, i) => {
       >
       <template v-slot:item="{ item }">
         <tr>
-          <td class="w-[1/4]">{{ item.name }}</td>
+          <td class="w-[1/4]">{{ staffMapping(item.name) }}</td>
           <td class="w-[1/4]">{{ item.before22}}</td>
           <td class="w-[1/4]">{{ item.after22 }}</td>
           <td class="w-[1/4]">{{ formatNumber((item.before22 * 1000) + (item.after22 * (1000 * 1.25)))}}</td>

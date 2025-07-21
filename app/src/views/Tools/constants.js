@@ -31,6 +31,11 @@ export const MEDIA_LIST = [
 		'3aH9ukMbeOpqsCKjQand': 'K', //そのた
 	}
 
+  export const staffcell = {
+    'DwnHZxQ8ns1cjXW9o4cq': 'AE', //ひかる
+    'mT16rmjAOIO0VmcTsheN': 'AD' //りゅうや
+  }
+
 
   export const staffid = {
     'DwnHZxQ8ns1cjXW9o4cq': 'C',

@@ -2,13 +2,33 @@
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import Loading from 'vue-loading-overlay'
-import { media, wholesalers, GAIHAN_ID, staffid } from '@/views/Tools/constants'
+import { media, wholesalers, GAIHAN_ID, staffid, staffcell } from '@/views/Tools/constants'
 
 import { collection, getDocs, getDoc, doc, query, where } from 'firebase/firestore'
 import { db } from '@/assets/firebase.init'
 import { ref } from 'vue'
 
 const isLoading = ref(false)
+const staffList = ref([]);
+const staffWages = ref({});
+
+const getStaffList = async () => {
+  const colRef = collection(db, 'staff');
+  const snapshot = await getDocs(colRef);
+
+  staffList.value = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  const wages = {};
+  staffList.value.forEach(staff => {
+    wages[staff.id] = staff.hourly_wage;
+  });
+  staffWages.value = wages;
+};
+
+getStaffList();
 
 const props = defineProps({
   label: {
@@ -25,8 +45,11 @@ const props = defineProps({
 
 const execlDL = async () => {
   isLoading.value = true
+  // const daysInMonth = new Date(props.year, props.month, 0).getDate()
+  // const days = [...Array(daysInMonth)].map((_, i) => i + 1)
 
-  const [data, targetData, staffList, wholesalersData] = await getSelectMonthDayData(props.year, props.month)
+  // getAllRecords(days, props.year, props.month)
+  const [data, targetData, staffList, wholesalersData, daily_salary] = await getSelectMonthDayData(props.year, props.month)
   const response = await fetch('/omiya_template.xlsx')
   const arrayBuffer = await response.arrayBuffer()
   const workbook = new ExcelJS.Workbook()
@@ -77,6 +100,22 @@ for (const [key, value] of Object.entries(wholesalersData)) {
     sheet2.getCell(wholesalers[innerKey] + (Number(key) + 1)).value = innerValue
   }
 }
+
+// きゅうりょう（ばいと）
+  const sheet3 = workbook.worksheets[3];
+  Object.entries(daily_salary).forEach(([key, value]) => {
+    if(value.length != 0){
+      value.forEach(element => {
+        const hourlyWage = Number(staffWages.value[element.name]);
+        const before22 = Number(element.before22 ?? 0) * hourlyWage;
+        const after22  = Number(element.after22  ?? 0) * hourlyWage * 1.25;
+        const total = before22 + after22;
+        console.log(total);
+        console.log(`cell：${(staffcell[element.name] + 2)}あたい:${total}`)
+        sheet3.getCell(staffcell[element.name] + (Number(key) + 1)).value = total
+      });
+    }
+  });
   // =============================================
 
 
@@ -87,7 +126,7 @@ for (const [key, value] of Object.entries(wholesalersData)) {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
-  saveAs(blob, 'template.xlsx')
+  saveAs(blob, `${props.year}_${props.month}_酔っ来い所_大宮.xlsx`)
   isLoading.value = false
 }
 
@@ -100,9 +139,34 @@ const getSelectMonthDayData = async (year, month) => {
   const mediaData = await getTest(days, year, month)
   const staffList = await getStaff(days, year, month);
   const wholesalersData = await getWholesalers(days, year, month)
-  return [mediaData, targetDay, staffList, wholesalersData]
+  const daily_salary  = await getAllRecords(days, year, month)
+  return [mediaData, targetDay, staffList, wholesalersData, daily_salary]
 }
 
+const getAllRecords = async (dates, year, month) => {
+  const allData = {};
+
+  const promises = dates.map(async (dateStr) => {
+    const colRef = collection(db, 'staff_hourly_wage', year + '-' + month + '-' + dateStr, 'records');
+    const snapshot = await getDocs(colRef);
+
+    allData[dateStr] = [];
+
+    snapshot.forEach((doc) => {
+      allData[dateStr].push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+  });
+
+  await Promise.all(promises);
+
+  return allData;
+};
+
+
+// きゃっちよう
 const getStaff = async (days, year, month) => {
   const specificStaffId = 'SiBHolMYOW9dzytgYzPW'
   const specificStaffData = {}
@@ -149,13 +213,8 @@ const getStaff = async (days, year, month) => {
   return specificStaffData
 }
 
-
-
-
-
 // 業者支払い
 const getWholesalers = async (days, year, month) => {
-  const test = {}
   const whole_sales = {}
   // Promise 配列の作成
   const promises = days.map(async (day) => {
@@ -291,4 +350,5 @@ function incrementExcelColumn(col) {
       <p>だうんろーどしています...</p>
     </div>
   </div>
+  {{ staffWages }}
 </template>
