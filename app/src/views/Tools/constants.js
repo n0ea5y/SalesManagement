@@ -3,15 +3,39 @@ export const MEDIA_FIELDS = ['組数', '人数', '合計金額'];
 
 
 export const MEDIA_LIST = [
-  {title: 'Ratty', kye: 'ratty'},
-  {title: 'hotpepper', kye: 'hotpepper'},
-  {title: '食べログ', kye: 'taberogu'},
-  {title: 'ぐるなび', kye: 'gurunabi'},
-  {title: 'フリー', kye: 'free'},
-  {title: 'SNS', kye: 'sns'},
-  {title: '外販', kye: 'gaihan'},
+  {title: 'hotpepper', kye: 'c4VML7BH7RWwhb48dajk'},
+  {title: 'フリー', kye: 'YQjFVyBTxo42zc2a7LtA'},
+  {title: 'SNS', kye: 'CmB51Dj7WUckwoggeyKv'},
+  {title: '外販', kye: 'SiBHolMYOW9dzytgYzPW'},
 ]
 
+// てんぷれーとよう
+  export const media = {
+		'c4VML7BH7RWwhb48dajk': 'C', //ほっとぺっぱー
+		'YQjFVyBTxo42zc2a7LtA': 'O', //ふりー
+		'CmB51Dj7WUckwoggeyKv': 'R', //SNS
+		'SiBHolMYOW9dzytgYzPW': 'U', //がいはん
+	}
+
+// てんぷれーとよう
+  export const wholesalers = {
+		'jun3zSbuaDVBVnghS2ln': 'B', //にしはら
+		'87cnvelPG7LZmk6Lhw62': 'C', //くによし
+		'J8ClCnf1uwcfybw6pAiL': 'D', //じゃぱんふーど
+		'VGKD1CbQ6wsjCaaBNq0M': 'E', //やべ
+		'T90Jwy4TGl5V2ET5Lz5t': 'F', //ふーどげんきん
+		'538Xcz6ogqgxj0jFXdLQ': 'G', //かくやす
+		'fwcBQ6HFqPnKnjiraQ3J': 'H', //どりんくげんきん
+		'UV8poYUDW0XJSMNX44Ai': 'I', //しょうもうひん
+		'V7KtEVlkdacIT2YzLtbg': 'J', //びひん
+		'3aH9ukMbeOpqsCKjQand': 'K', //そのた
+	}
+
+
+  export const staffid = {
+    'DwnHZxQ8ns1cjXW9o4cq': 'C',
+    'mT16rmjAOIO0VmcTsheN': 'F',
+  }
 export const GAIHAN_ID = 'SiBHolMYOW9dzytgYzPW';
 
 // 卓番

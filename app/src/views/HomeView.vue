@@ -4,6 +4,7 @@
   import MonthlyView from './components/MonthlyView.vue';
   import SmText from '@/components/SmText.vue';
   import { computed, ref, watch } from 'vue';
+  import SmExcelBtn from '@/components/SmExcelBtn.vue';
 
   const monthlyViewRef = ref(null)
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
@@ -22,6 +23,7 @@
 
 <template>
   <AuthLayout>
+    <SmExcelBtn label="ExcelDL" :year=year :month="month"></SmExcelBtn>
     <div class="w-[50%] mx-auto mt-[-10px]">
       <SmText type="date" bordernone v-model="today"></SmText>
     </div>
