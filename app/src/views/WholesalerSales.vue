@@ -32,7 +32,8 @@
   const getWholesalerMaster = async () => {
     const querySnapshot = await getDocs(collection(db, "wholesalers"));
     wholesalers.value = querySnapshot.docs.map((doc) => {
-      return { 'key': doc.data().key, 'title': doc.data().name };
+      console.log(doc.id)
+      return { 'key': doc.id, 'title': doc.data().name };
     });
   }
 
@@ -154,6 +155,15 @@
     { title: '支払額', key: 'amount', sortable: false },
     { title: '', key: 'action', width: '10px', sortable: false },
   ];
+
+const wholeMapping = (v) => {
+  if (!wholesalers.value) return ''
+
+  const list = Object.values(wholesalers.value)
+  const match = list.find(item => item.key === v)
+
+  return match ? match.title : ''
+}
   const formatNumber = (num) => {
     if (num == null || num === '') return ''
     return '￥' + Number(num).toLocaleString() + '円'
@@ -170,7 +180,7 @@
 
       <template v-slot:item="{ item }">
         <tr>
-          <td>{{ item.key }}</td>
+          <td>{{ wholeMapping(item.key) }}</td>
           <td>{{ formatNumber(item.amount) }}</td>
           <td class="flex gap-4 items-center">
             <!-- 削除ボタン -->
@@ -201,13 +211,12 @@
       todaySale = {};
       dialog = true
     }" />
-
     <v-dialog v-model="dialog" max-width="80%">
-      <v-card prepend-icon="mdi-account" title="インアウト表入力">
+      <v-card prepend-icon="mdi-account" title="業者支払い入力">
         <div class="w-full pb-5 px-2 mx-auto">
           <form @submit.prevent="addMode ? submit() : update()">
             <div class="flex flex-col w-full">
-              <SmSelect label="業者" v-model="todaySale.key" :items="wholesalers"></SmSelect>
+              <SmSelect label="業者" v-model="todaySale.key" :items="wholesalers" ></SmSelect>
               <SmText label="金額" v-model="todaySale.amount"></SmText>
             </div>
             <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => {
