@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// import LoginView from '@/views/LoginView.vue'
+import LoginView from '@/views/LoginView.vue'
 import HomeView from '@/views/HomeView.vue'
 
 const router = createRouter({
@@ -9,32 +9,40 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      // meta:{
+      //   isPublic: true,
+      // },
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
       meta:{
         isPublic: true,
-      },
+      }
     },
     {
       path: '/media-agent',
       name: 'mediaAgent',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/Master/MediaAgent.vue')
     },
     {
       path: '/wholesaler',
       name: 'wholesaler',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/Master/Wholesaler.vue')
     },
     {
       path: '/staff',
       name: 'staff',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/Master/Staff.vue')
     },
     {
@@ -48,43 +56,36 @@ const router = createRouter({
     {
       path: '/store-wholesaler-sales',
       name: 'storeDailyDetail',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/WholesalerSales.vue')
     },
     {
       path: '/store-monthly-detail',
       name: 'storeMonthlyDetail',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/StoreMonthlyDetail.vue')
     },
     {
       path: '/staff-shift-input',
       name: 'staffShiftInput',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/StaffShiftInput.vue')
     },
     {
       path: '/catch-staff-sales',
       name: 'catchStaffSales',
-      meta:{
-        isPublic: true,
-      },
+      // meta:{
+      //   isPublic: true,
+      // },
       component: () => import('../views/CatchStaffSales.vue')
     },
-    // {
-    //   path: '/login',
-    //   name: 'login',
-    //   component: LoginView,
-    //   // meta:{
-    //   //   isPublic: true,
-    //   // }
-    // },
+
   ],
 })
 

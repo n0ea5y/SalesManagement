@@ -41,7 +41,7 @@ onAuthStateChanged(auth, (user) => {
     // ルーターガード登録
     router.beforeEach((to, from, next) => {
       if (to.matched.some(record => !record.meta.isPublic) && !store.isLoggedIn) {
-        next('/home')
+        next('/login')
       } else {
         next()
       }

@@ -21,11 +21,10 @@
 </script>
 
 <template>
-  <label :for="uniqueId">{{ props.label }}</label>
-  <input
+  <!-- <label :for="uniqueId">{{ props.label }}</label> -->
+  <v-text-field :label="label" variant="outlined" 
     :id="uniqueId"
-    :type="props.type"
-    class="border-2 border-gray-700 rounded-md p-2"
+    :type="type"
     v-model="vModel"
-    >
+  ></v-text-field>
 </template>

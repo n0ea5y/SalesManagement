@@ -22,20 +22,22 @@
     .catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;
+      console.log(errorCode)
+      console.log(errorMessage)
     });
   }
 
 </script>
-
 <template>
   <DefaultLayout>
-    <h1>ログイン画面</h1>
-    <div class="flex flex-col w-[50%] mx-auto">
-      <form @submit.prevent="submit">
-        <SmInput label="メールアドレス" v-model="email" />
-        <SmInput label="パスワード" type="password" v-model="password" />
-        <SmButton  type="submit"/>
-      </form>
+    <div class="flex flex-col items-center justify-center min-h-screen">
+      <div class="flex flex-col w-[80%] max-w-md p-6 rounded">
+        <form @submit.prevent="submit" class="flex flex-col gap-4">
+          <SmInput label="メールアドレス" v-model="email" />
+          <SmInput label="パスワード" type="password" v-model="password" />
+          <SmButton label="ログイン" />
+        </form>
+      </div>
     </div>
   </DefaultLayout>
 </template>

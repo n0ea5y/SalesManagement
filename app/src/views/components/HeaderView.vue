@@ -1,8 +1,12 @@
 <script setup>
   import { ref } from 'vue'
+  import { getAuth, signOut } from "firebase/auth";
+  import { useRouter } from 'vue-router';
+  import { userStatus } from '../../stores/userStatus'
 
   const adminOpen = ref(false)
-
+  const router = useRouter();
+  const store = userStatus();
   const toggleAdmin = () => {
     adminOpen.value = !adminOpen.value
   }
@@ -16,23 +20,33 @@
     menuOpen.value = false
   }
 
-  const logout = () => {
-    alert('ログアウトしました')
-  }
-
+const logout = () => {
+  const auth = getAuth();
+  signOut(auth)
+    .then(() => {
+      router.push('/login');
+    })
+    .catch((error) => {
+      console.error('ログアウト失敗:', error);
+      alert('ログアウトに失敗しました');
+    });
+}
 </script>
 
 <template>
   <nav class="p-4 bg-gray-200 flex gap-5 items-center relative">
     <!-- Always visible -->
-    <router-link to="/" class="text-base font-bold">ホーム</router-link>
-    <router-link to="/inout" class="text-base">インアウト表</router-link>
-    <router-link to="/store-wholesaler-sales" class="text-base">支払い関連</router-link>
-    <router-link to="/staff-shift-input" class="text-base">勤怠</router-link>
-    <router-link to="/catch-staff-sales" class="text-base">外販売上</router-link>
+     <p  v-if="!store.isLoggedIn" style="background-color: rgb(229, 231, 235); color: black; border-bottom: none; font-weight: bold;">ホーム</p>
+      <router-link
+      style="background-color: rgb(229, 231, 235); color: black; border-bottom: none; font-weight: bold;"
+      v-if="store.isLoggedIn"
+      to="/"
+      class="px-2 py-1 bg-gray-200">ホーム</router-link>
+      <!-- <router-link v-if="store.isLoggedIn" to="/" class="text-base bg-gray-200 font-bold">ホーム</router-link> -->
 
     <!-- Hamburger or Close icon -->
     <button
+      v-if="store.isLoggedIn"
       class="ml-auto md:hidden z-50 relative"
       @click="toggleMenu"
     >
@@ -49,7 +63,7 @@
     </button>
 
     <!-- PC用メニュー -->
-    <div class="hidden md:flex gap-5 ml-5 relative">
+    <div v-if="store.isLoggedIn" class="hidden md:flex gap-5 ml-5 relative">
       <!-- 管理画面ドロップダウン -->
       <div class="relative" @mouseleave="adminOpen = false">
         <button
@@ -75,6 +89,7 @@
 
     <!-- Logout Button (PCのみ) -->
     <button
+      v-if="store.isLoggedIn"
       class="ml-auto text-xs border border-solid border-gray-500 rounded py-1 px-2 hidden md:block"
       @click="logout"
     >
@@ -82,7 +97,7 @@
     </button>
 
     <!-- マスクとモバイルメニュー -->
-    <transition name="slide">
+    <transition v-if="store.isLoggedIn" name="slide">
       <div v-if="menuOpen" class="fixed inset-0 z-40 md:hidden">
         <!-- 黒いマスク -->
         <div
@@ -107,6 +122,37 @@
       </div>
     </transition>
   </nav>
+<div class="flex justify-around text-xs space-x-2 py-1">
+  <router-link
+    v-if="store.isLoggedIn"
+    to="/inout"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+  >
+    インアウト表
+  </router-link>
+  <router-link
+    v-if="store.isLoggedIn"
+    to="/store-wholesaler-sales"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+  >
+    支払い関連
+  </router-link>
+  <router-link
+    v-if="store.isLoggedIn"
+    to="/staff-shift-input"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+  >
+    勤怠
+  </router-link>
+  <router-link
+    v-if="store.isLoggedIn"
+    to="/catch-staff-sales"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+  >
+    外販売上
+  </router-link>
+</div>
+
 </template>
 
 
@@ -143,4 +189,12 @@
 .slide-leave-to {
   transform: translateX(100%);
 }
+
+.router-link-active {
+  font-weight: bold;
+  background-color: gray;
+  border-bottom: 2px solid gray; /* タブ感を出すならこれも */
+  color: white;
+}
+
 </style>
