@@ -10,7 +10,6 @@ import { ref } from 'vue'
 
 const isLoading = ref(false)
 const staffList = ref([]);
-const ryousyusyo = ref([]);
 const staffWages = ref({});
 
 const getStaffList = async () => {
@@ -49,7 +48,7 @@ const props = defineProps({
 
 const execlDL = async () => {
   isLoading.value = true
-  const [data, targetData, staffList, wholesalersData, daily_salary, dayWholesalersTotal] = await getSelectMonthDayData(props.year, props.month)
+  const [data, targetData, staffList, wholesalersData, daily_salary, dayWholesalersTotal, amount_cash, amount_card, amount_point] = await getSelectMonthDayData(props.year, props.month)
   const response = await fetch('/omiya_template.xlsx')
   const arrayBuffer = await response.arrayBuffer()
   const workbook = new ExcelJS.Workbook()
@@ -71,6 +70,18 @@ const execlDL = async () => {
     }
   })
 
+  // げんきん
+  Object.entries(amount_cash).forEach(([day, total]) => {
+    sheet.getCell('AF' + (Number(day) + 2)).value = total
+  });
+  // かーど
+  Object.entries(amount_card).forEach(([day, total]) => {
+    sheet.getCell('AG' + (Number(day) + 2)).value = total
+  });
+  // ぽいんと
+  Object.entries(amount_point).forEach(([day, total]) => {
+    sheet.getCell('AH' + (Number(day) + 2)).value = total
+  });
   // りょうしゅうしょ
   Object.entries(dayWholesalersTotal).forEach(([day, total]) => {
     sheet.getCell('AJ' + (Number(day) + 2)).value = total
@@ -116,8 +127,6 @@ for (const [key, value] of Object.entries(wholesalersData)) {
         const before22 = Number(element.before22 ?? 0) * hourlyWage;
         const after22  = Number(element.after22  ?? 0) * hourlyWage * 1.25;
         const total = before22 + after22;
-        console.log(total);
-        console.log(`cell：${(staffcell[element.name] + 2)}あたい:${total}`)
         sheet3.getCell(staffcell[element.name] + (Number(key) + 1)).value = total
       });
     }
@@ -141,11 +150,11 @@ const getSelectMonthDayData = async (year, month) => {
   const days = [...Array(daysInMonth)].map((_, i) => i + 1)
 
   const targetDay = await getDailyTarget(days, year, month)
-  const mediaData = await getTest(days, year, month)
+  const [mediaData, amount_cash, amount_card, amount_point] = await getTest(days, year, month)
   const staffList = await getStaff(days, year, month);
   const [wholesalersData, dayWholesalersTotal] = await getWholesalers(days, year, month)
   const daily_salary  = await getAllRecords(days, year, month)
-  return [mediaData, targetDay, staffList, wholesalersData, daily_salary, dayWholesalersTotal]
+  return [mediaData, targetDay, staffList, wholesalersData, daily_salary, dayWholesalersTotal, amount_cash, amount_card, amount_point]
 }
 
 const getAllRecords = async (dates, year, month) => {
@@ -289,6 +298,9 @@ const getDailyTarget = async (days, year, month) => {
 // 日別売上
 const getTest = async (days, year, month) => {
   const media_agencies = {}
+  const amount_cash = {}
+  const amount_card = {}
+  const amount_point = {}
 
   const promises = days.map(async (day) => {
     const colRef = collection(db, 'daily_sales', year, month, String(day), 'records')
@@ -304,10 +316,23 @@ const getTest = async (days, year, month) => {
     if (!media_agencies[dayStr]) {
       media_agencies[dayStr] = {}
     }
+    if (!amount_cash[dayStr]) amount_cash[dayStr] = 0
+    if (!amount_card[dayStr]) amount_card[dayStr] = 0
+    if (!amount_point[dayStr]) amount_point[dayStr] = 0
 
     snapshot.forEach((doc) => {
       const data = doc.data()
       const key = data.staff_in_charge
+
+
+      if(data.pyment_method == 'cash'){
+        amount_cash[dayStr] += Number(data.amount);
+      }else if(data.pyment_method == 'card'){
+        amount_card[dayStr] += Number(data.amount);
+      }else if(data.pyment_method == 'point'){
+        amount_cash[dayStr] += Number(data.amount);
+        amount_point[dayStr] += Number(data.amount);
+      }
 
       if (!media_agencies[dayStr][key]) {
         media_agencies[dayStr][key] = {
@@ -327,7 +352,8 @@ const getTest = async (days, year, month) => {
     day,
     staffData,
   }))
-  return mediaList
+
+  return [mediaList, amount_cash, amount_card, amount_point]
 }
 
 // いんくりめとかんすう
