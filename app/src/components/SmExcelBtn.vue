@@ -10,6 +10,7 @@ import { ref } from 'vue'
 
 const isLoading = ref(false)
 const staffList = ref([]);
+const ryousyusyo = ref([]);
 const staffWages = ref({});
 
 const getStaffList = async () => {
@@ -48,7 +49,7 @@ const props = defineProps({
 
 const execlDL = async () => {
   isLoading.value = true
-  const [data, targetData, staffList, wholesalersData, daily_salary] = await getSelectMonthDayData(props.year, props.month)
+  const [data, targetData, staffList, wholesalersData, daily_salary, dayWholesalersTotal] = await getSelectMonthDayData(props.year, props.month)
   const response = await fetch('/omiya_template.xlsx')
   const arrayBuffer = await response.arrayBuffer()
   const workbook = new ExcelJS.Workbook()
@@ -69,6 +70,12 @@ const execlDL = async () => {
       })
     }
   })
+
+  // りょうしゅうしょ
+  Object.entries(dayWholesalersTotal).forEach(([day, total]) => {
+    sheet.getCell('AJ' + (Number(day) + 2)).value = total
+  });
+
 
   // ひべつもくひょうにゅうりょく
   for (const [key, value] of Object.entries(targetData)) {
@@ -136,9 +143,9 @@ const getSelectMonthDayData = async (year, month) => {
   const targetDay = await getDailyTarget(days, year, month)
   const mediaData = await getTest(days, year, month)
   const staffList = await getStaff(days, year, month);
-  const wholesalersData = await getWholesalers(days, year, month)
+  const [wholesalersData, dayWholesalersTotal] = await getWholesalers(days, year, month)
   const daily_salary  = await getAllRecords(days, year, month)
-  return [mediaData, targetDay, staffList, wholesalersData, daily_salary]
+  return [mediaData, targetDay, staffList, wholesalersData, daily_salary, dayWholesalersTotal]
 }
 
 const getAllRecords = async (dates, year, month) => {
@@ -213,35 +220,46 @@ const getStaff = async (days, year, month) => {
 // 業者支払い
 const getWholesalers = async (days, year, month) => {
   const whole_sales = {}
-  // Promise 配列の作成
+  const day_total = {}
+
   const promises = days.map(async (day) => {
-    // ドキュメント参照に変更
-    const docRef = doc(db, 'total_wholesaler_sales', year + '_' + month, 'days', String(day))
-    const snapshot = await getDoc(docRef) // ドキュメント取得
+    const docRef = doc(db, 'total_wholesaler_sales', `${year}_${month}`, 'days', String(day))
+    const snapshot = await getDoc(docRef)
     return { day, snapshot }
   })
 
-  // Promise を全て解決する
   const seleList = await Promise.all(promises)
+
   if (seleList && seleList.length > 0) {
     seleList.forEach(({ day, snapshot }) => {
       const dayStr = String(day)
 
-      // IDちぇっく
       if (!whole_sales[dayStr]) {
         whole_sales[dayStr] = {}
       }
 
-      // でーたちぇっく
+      let total = 0 // 合計金額の初期化
+
       if (snapshot.exists()) {
-        snapshot.data().media.forEach((element) => {
-          whole_sales[day][element.media_name] = element.media_amount
-        })
+        const data = snapshot.data()
+        if (Array.isArray(data.media)) {
+          data.media.forEach((element) => {
+            const mediaName = element.media_name
+            const amount = Number(element.media_amount) || 0
+
+            whole_sales[dayStr][mediaName] = amount
+            total += amount
+          })
+        }
       }
+
+      day_total[dayStr] = total
     })
   }
-  return whole_sales;
+
+  return  [whole_sales, day_total]
 }
+
 
 // 日別目標
 const getDailyTarget = async (days, year, month) => {
