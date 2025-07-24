@@ -3,7 +3,7 @@
   import SmButton from '@/components/SmButton.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import SmText from '@/components/SmText.vue';
-  import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, PLANS, YES_NO_OPTIONS } from './Tools/constants';
+  import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, PLANS, YES_NO_OPTIONS, paymentMethods } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
   import { collection, getDocs, setDoc, updateDoc, where, doc, query, deleteDoc } from "firebase/firestore";
   import { computed, onMounted, ref, watch } from 'vue';
@@ -186,15 +186,19 @@
         <v-card class="flex flex-col gap-5 py-4 px-2">
           <div class="flex gap-5">
             <label for="time">入店時間</label>
-            <input id="time" type="time" v-model="salesRecords.entry_time">
+            <div class="border px-3">
+              <input id="time" type="time" v-model="salesRecords.entry_time">
+            </div>
           </div>
           <SmSelect label="卓番" :items="TABLE_NUMBER" v-model="salesRecords.table_number" required></SmSelect>
           <SmSelect label="担当者" :items="mediaAgencies" v-model="salesRecords.staff_in_charge" required></SmSelect>
-          <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.media_agent === GAIHAN_ID"></SmSelect>
+          <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.staff_in_charge == GAIHAN_ID"></SmSelect>
           <SmSelect label="人数" :items="GET_NUMBER(50)" v-model="salesRecords.guest_count" required></SmSelect>
           <SmSelect label="プラン" :items="PLANS" v-model="salesRecords.plan" required></SmSelect>
           <SmSelect label="お通し" :items="YES_NO_OPTIONS" v-model="salesRecords.otoshi" required></SmSelect>
           <SmSelect label="フード数" :items="GET_NUMBER(10)" v-model="salesRecords.food_count" required></SmSelect>
+          <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="salesRecords.amount != ''"></SmSelect>
+          <SmText v-if="salesRecords.pyment_method == 'point'" label="利用ポイント数" :bordernone="false" v-model="salesRecords.point" required></SmText>
           <SmText label="金額" :bordernone="false" v-model="salesRecords.amount"></SmText>
           <div class="flex justify-end gap-2">
             <SmButton :label="addMode ? '登録' : 'こうしん'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
