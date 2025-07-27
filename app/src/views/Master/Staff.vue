@@ -22,7 +22,7 @@
 
   const rowClick = (value) => {
     addMode.value = false;
-    console.log(value)
+    (value)
     staff.value = { ...value };
     dialog.value = true;
   }
@@ -70,8 +70,8 @@
 
   const headers = [
     { title: '名前', key: 'name', width: '100px', sortable: false },
-    { title: '時給', key: 'hourly_wage', width: '100px', sortable: false },
     { title: 'タイプ', key: 'type', width: '100px', sortable: false },
+    { title: '時給', key: 'hourly_wage', width: '100px', sortable: false },
     { title: '歩合', key: 'commissionRate', width: '100px', sortable: false },
     { title: '', key: 'action', width: '10px', sortable: false },
   ];
@@ -84,29 +84,23 @@
 
 <template>
   <AuthLayout>
-    <!-- <SmTable :headers="headers" :items="staffMaster" action @rowClick="(item) => { rowClick(item) }" /> -->
-    <div class=" overflow-x-auto">
-      <v-data-table 
-        :headers="headers" 
-        :items="staffMaster"
-        fixed-header  
-        hide-default-footer
-      >
-      <template v-slot:item="{ item }">
-        <tr>
-          <td>{{ item.name }}</td>
-          <td>{{ item.hourly_wage }}</td>
-          <td class="text-xs">{{ typeMapping(item.type) }}</td>
-          <td class="flex gap-4 items-center w-[110px]">
-              <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="error" @click="() => { remove(item) }">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                  stroke="currentColor" class="size-6">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M6 7h12M9 7v10a2 2 0 0 0 4 0V7M5 7h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7zM10 4h4m-3 0V3a1 1 0 1 0-2 0v1m6 0V3a1 1 0 1 0-2 0v1" />
-                </svg>
-              </v-btn>
-
-              <!-- 更新ボタン -->
+   <div class="overflow-x-auto">
+  <v-data-table 
+    :headers="headers" 
+    :items="staffMaster"
+    :items-per-page="-1"
+    fixed-header
+    hide-default-footer
+    class="h-[700px]"
+  >
+    <template v-slot:item="{ item }">
+      <tr>
+        <td>{{ item.name }}</td>
+        <td class="text-xs">{{ typeMapping(item.type) }}</td>
+        <td>{{ item.hourly_wage }}</td>
+        <td>{{ item.commissionRate }}</td>
+        <td class="flex gap-4 items-center w-[110px]">
+           <!-- 更新ボタン -->
               <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="#fef08a" @click="() => { rowClick(item) }">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                   stroke="currentColor" class="size-6">
@@ -114,12 +108,13 @@
                     d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                 </svg>
               </v-btn>
-          </td>
-        </tr>
+          <!-- ボタンなど -->
+        </td>
+      </tr>
+    </template>
+  </v-data-table>
+</div>
 
-      </template>
-      </v-data-table>
-    </div>
 
     <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="() => {
       addMode = true
@@ -161,7 +156,7 @@
                 </div>
 
                 <div class="flex flex-col" v-if="staff.type != 1">
-                  <label for="staffType">タイプ<span class="text-red-500 font-bold text-xs">※必須</span></label>
+                  <label for="staffType">歩合<span class="text-red-500 font-bold text-xs">※必須</span></label>
                   <select id="staffType" v-model="staff.commissionRate"
                     class="border border-black bg-white rounded h-[40px] w-[95%] mx-auto text-lg pl-2">
                     <option v-for="num in numbers" :key="num" :value="num">

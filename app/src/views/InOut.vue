@@ -149,7 +149,7 @@
       <SmText type="date" bordernone v-model="today"></SmText>
     </div>
     <div class="flex overflow-x-auto">
-      <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems">
+      <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems" :items-per-page="-1">
         <template v-slot:item="{item}">
         <tr :class="[!item.amount ? 'bg-red-200': '']">
           <td>{{ item.entry_time }}</td>

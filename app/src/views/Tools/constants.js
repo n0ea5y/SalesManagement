@@ -36,16 +36,46 @@ export const MEDIA_LIST = [
     {title: 'クレジットカード', key: 'card'},
     {title: 'ポイント+現金', key: 'point'},
   ]
+
+
+  // すたっふ（てんない）
   export const staffcell = {
+    'ZoK1kS7ZkL2cFQ5CKtB2': 'C',//けんご
+    '5Ip7aPutqyFm9dldACox': 'D', //けんと
+    'SGAWUrpqsaCLZrQOKdMj': 'E', //しょうた
+    'US3nsRkjCzz2btXskAiV': 'F', //そうすけ
+    'WzJmoFaErzOoENksOK7d': 'G', //ゆな
+    'cZEqvYKtTUupJF681ca7': 'H', //さな
+    'gDX82yWIxhvWqlr8siIW': 'I', //はると
+    'o0QdPC4iNp08p2Cr7jpB': 'J', //ゆずは
+    'slQicr3xk2GC9O1Ux3Q9': 'K', //とうご
+    't1nHdx9Py692rhRf4fHl': 'L', //たかやす
+    'yycbco2CvnKWwCVYXLiw': 'M', //みん
     'A4XVBnJMXjOMHzQ3tF4I': 'AE', //おーなー１
     'mT16rmjAOIO0VmcTsheN': 'AD' //りゅうや
   }
 
-
+  // がいはん
   export const staffid= {
-    'DwnHZxQ8ns1cjXW9o4cq': 'AW', //おーな２２
-    'A4XVBnJMXjOMHzQ3tF4I': 'AZ', //おーなー１
-    'mT16rmjAOIO0VmcTsheN': 'BC' //りゅうや
+    'VncUni6fFPSGlj8fqc6Y': 'F', //りひと
+    'ZoK1kS7ZkL2cFQ5CKtB2': 'F', //けんご
+    'AU4nBZdULIrblgfBamk5': 'L', //みゆ
+    'cnXSfZuX1PqNwJ5OrVE0': 'O', //はこ
+    '08rSkH7y7LOTDyLmzVdE': 'R', //ひな
+    'WzJmoFaErzOoENksOK7d': 'U', //ゆな
+    'SGAWUrpqsaCLZrQOKdMj': 'X', //しょうた
+    'US3nsRkjCzz2btXskAiV': 'AA', //そうすけ
+    '5Ip7aPutqyFm9dldACox': 'AD', //けんと
+    'bxVQwlpd6eqXmEijSQzq': 'AG', //酔うちゃん
+    'cZEqvYKtTUupJF681ca7': 'AJ', //さな
+    'gDX82yWIxhvWqlr8siIW': 'AM', //はると
+    'o0QdPC4iNp08p2Cr7jpB': 'AP', //ゆずは
+    'slQicr3xk2GC9O1Ux3Q9': 'AS', //とうご
+    't1nHdx9Py692rhRf4fHl': 'AV', //たかやす
+    'yycbco2CvnKWwCVYXLiw': 'AY', //みん
+    'DwnHZxQ8ns1cjXW9o4cq': 'BI', //おーな２２
+    'A4XVBnJMXjOMHzQ3tF4I': 'BF', //おーなー１
+    'mT16rmjAOIO0VmcTsheN': 'BL' //りゅうや
   }
 export const GAIHAN_ID = 'SiBHolMYOW9dzytgYzPW';
 

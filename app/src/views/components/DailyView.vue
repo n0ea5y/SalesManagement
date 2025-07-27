@@ -166,7 +166,7 @@
     </v-dialog>
   </div>
   <p></p>
-  <v-data-table :items="salesRecordItems" hide-default-header hide-default-footer
+  <v-data-table :items="salesRecordItems" hide-default-header hide-default-footer :items-per-page="-1"
     class="bg-transparent max-h-[300px] w-full">
     <template v-slot:item="{ item }">
       <tr class="text-sm text-center border-b">

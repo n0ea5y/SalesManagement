@@ -154,7 +154,7 @@ const times = Array.from({ length: 41 }, (_, i) => {
     return '￥' + Number(num).toLocaleString() + '円'
   }
   const test = (item) => {
-    console.log(item);
+    (item);
   }
 
   const staffMapping = (v) => {
@@ -176,6 +176,7 @@ const times = Array.from({ length: 41 }, (_, i) => {
         :headers="headers" 
         :items="staffhourlywageItems"
         class="min-w-[620px]"
+        :items-per-page="-1"
         fixed-header  
         hide-default-footer
       >

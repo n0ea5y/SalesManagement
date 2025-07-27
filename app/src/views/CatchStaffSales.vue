@@ -90,7 +90,7 @@ const amountTest = (amount, rateStr) => {
     </div>
 
   <div class="overflow-x-auto">
-    <v-data-table :items="catchAmountList" hide-default-header hide-default-footer class="bg-transparent max-h-[300px] w-full min-w-[500px]">
+    <v-data-table :items="catchAmountList" hide-default-header :items-per-page="-1" hide-default-footer class="bg-transparent max-h-[300px] w-full min-w-[500px]">
       <template v-slot:item="{ item }">
         <tr class="text-sm border-b">
           <td class="text-xs">{{ staffMapping(item.staff_id) }}</td>

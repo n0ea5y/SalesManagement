@@ -70,40 +70,40 @@ const execlDL = async () => {
     }
   })
 
-  console.log('test1')
+  ('test1')
   // げんきん
   Object.entries(amount_cash).forEach(([day, total]) => {
     sheet.getCell('AF' + (Number(day) + 2)).value = total
   });
-  console.log('test2')
+  ('test2')
   // かーど
   Object.entries(amount_card).forEach(([day, total]) => {
     sheet.getCell('AG' + (Number(day) + 2)).value = total
   });
 
-  console.log('test3')
+  ('test3')
   // ぽいんと
-  console.log(amount_point);
+  (amount_point);
   Object.entries(amount_point).forEach(([day, total]) => {
     sheet.getCell('AH' + (Number(day) + 2)).value = total
   });
-  console.log('test4')
+  ('test4')
   // りょうしゅうしょ
   Object.entries(dayWholesalersTotal).forEach(([day, total]) => {
     sheet.getCell('AJ' + (Number(day) + 2)).value = total
   });
 
 
-  console.log('test5')
+  ('test5')
   // ひべつもくひょうにゅうりょく
-  console.log(targetData);
+  // (targetData);
   for (const [key, value] of Object.entries(targetData)) {
     sheet.getCell('AC' + (Number(key) + 2)).value = value
   }
 
-  console.log('test6')
+  ('test6')
   // がいはんにゅうりょく
-  // console.log(staffList);
+  // (staffList);
   const sheet1 = workbook.worksheets[1]
   for (const [key, value] of Object.entries(staffList)) {
     if (Object.keys(value).length === 0) continue;
@@ -116,7 +116,7 @@ const execlDL = async () => {
     }
   }
 
-  console.log('test7')
+  ('test7')
   const sheet2 = workbook.worksheets[2]
   // ぎょうしゃしはらいかきこみ
 for (const [key, value] of Object.entries(wholesalersData)) {
@@ -129,10 +129,10 @@ for (const [key, value] of Object.entries(wholesalersData)) {
   }
 }
 
-  console.log('test8')
+  ('test8')
 // きゅうりょう（ばいと）
   const sheet3 = workbook.worksheets[3];
-  console.log(daily_salary);
+  // (daily_salary);
 if (Object.keys(daily_salary).length !== 0) {
   Object.entries(daily_salary).forEach(([key, value]) => {
     if (value.length !== 0) {
@@ -337,6 +337,7 @@ const getTest = async (days, year, month) => {
 
     snapshot.forEach((doc) => {
       const data = doc.data()
+      (data);
       const key = data.staff_in_charge
 
 
@@ -367,6 +368,8 @@ const getTest = async (days, year, month) => {
     day,
     staffData,
   }))
+
+  // (mediaList);
 
   return [mediaList, amount_cash, amount_card, amount_point]
 }

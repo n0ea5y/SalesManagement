@@ -127,7 +127,7 @@ const getDailySales = () => {
 
 <template>
     <p>月売上目標<span>{{ todaySalesTargetAll ? '：' + formatNumber(todaySalesTargetAll) : '' }}</span></p>
-    <v-data-table :items="mediaAgenciesMonth" class="bg-transparent max-h-[300px]" hide-default-header hide-default-footer>
+    <v-data-table :items="mediaAgenciesMonth" :items-per-page="-1" class="bg-transparent max-h-[300px]" hide-default-header hide-default-footer>
         <template v-slot:item="{ item }">
             <tr class="text-sm text-center border-b">
                 <td class="py-1 px-3 w-2/12">{{ mediaAgentMapping(item.staff_in_charge)}}</td>

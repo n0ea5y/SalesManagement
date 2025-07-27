@@ -34,7 +34,7 @@ const formatNumber = (num) => {
 
 <template>
   <div :class="w_overflow ? 'w-full overflow-x-auto' : ''">
-    <v-data-table :headers="headers" :items="items" class="bg-transparent max-h-[300px]"
+    <v-data-table :headers="headers" :items="items" :items-per-page="-1" class="bg-transparent max-h-[300px]"
       :class="[w_overflow ? 'min-w-[900px]' : '', height]" fixed-header hide-default-footer>
       <template v-if="inout" v-slot:item="{ item }">
         <tr :class="{ 'bg-red-300': !item.amount }">

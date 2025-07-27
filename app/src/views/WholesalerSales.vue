@@ -43,7 +43,7 @@
 
   // 更新ボタンが押されたら処理
   const rowClick = (value) => {
-    console.log(value)
+    (value)
     addMode.value = false;
     todaySale.value = { ...value };
     dialog.value = true;
@@ -181,7 +181,7 @@ const wholeMapping = (v) => {
       <SmText type="date" bordernone v-model="today"></SmText>
     </div>
     <v-data-table :headers="headers" :items="dailySales" class="bg-transparent max-h-[300px]" fixed-header
-      hide-default-footer>
+      :items-per-page="-1" hide-default-footer>
 
       <template v-slot:item="{ item }">
         <tr>
