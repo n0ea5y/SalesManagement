@@ -1,6 +1,6 @@
 <script setup>
   import { onMounted, ref, watch } from 'vue';
-  import { getDocs, collection, getDoc, setDoc, doc } from "firebase/firestore";
+  import { getDocs, collection, getDoc, setDoc, doc, addDoc, onSnapshot } from "firebase/firestore";
   import { db } from '@/assets/firebase.init';
   import SmText from '@/components/SmText.vue';
   import SmButton from '@/components/SmButton.vue';
@@ -56,49 +56,75 @@
   }
 
   // 当日の売上目標取得
-  const getDailySalesTarget = async () => {
+  let unsubscribeDailyTarget = null;
+
+  const getDailySalesTarget = () => {
     const docRef = doc(db, 'daily_sales_target', year.value, month.value, day.value);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      todaySalesTarget.value = docSnap.data().day_sales;
-      outPutSalesTarget.value = docSnap.data().day_sales;
-      addMode.value = false;
+
+    // すでに購読している場合は解除
+    if (unsubscribeDailyTarget) {
+      unsubscribeDailyTarget();
     }
-  }
 
-  // 日別売上一覧取得
-  const getDailySales = async () => {
-    resetData();
-    // daily_salesテーブルからデータを取得
-    const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
-    const querySnapshot = await getDocs(docRef);
-
-    // データの加工
-    let mediaAgencies = {};
-    querySnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      const mediaId = doc.data().staff_in_charge;
-      totalGuestCount.value += Number(data.guest_count);
-      totalAmount.value += Number(data.amount);
-      totalCount.value++;
-
-      // すでに存在する場合は加算、なければ初期化
-      mediaAgencies[mediaId] = mediaAgencies[mediaId] || {
-        amount: 0,
-        guest_count: 0,
-        count: 0,
-      };
-
-      mediaAgencies[mediaId].amount += Number(data.amount);
-      mediaAgencies[mediaId].guest_count += Number(data.guest_count);
-      mediaAgencies[mediaId].count += 1;
+    // Firestore ドキュメントのリアルタイム監視
+    unsubscribeDailyTarget = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        todaySalesTarget.value = docSnap.data().day_sales;
+        outPutSalesTarget.value = docSnap.data().day_sales;
+        addMode.value = false;
+      } else {
+        todaySalesTarget.value = 0;
+        outPutSalesTarget.value = 0;
+        addMode.value = true;
+      }
     });
-    // Object.values で配列化して代入
-    salesRecordItems.value = Object.entries(mediaAgencies).map(([mediaId, info]) => ({
-      staff_in_charge: mediaId,
-      ...info
-    }));
-  }
+  };
+
+  let unsubscribeSalesRecords = null;
+    // 日別売上一覧リアルタイム取得
+  const getDailySales = () => {
+    // resetData();
+
+    const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
+
+    // すでに購読がある場合は解除
+    if (unsubscribeSalesRecords) {
+      unsubscribeSalesRecords();
+    }
+
+    // onSnapshot によるリアルタイム監視
+    unsubscribeSalesRecords = onSnapshot(docRef, (querySnapshot) => {
+      let mediaAgencies = {};
+      totalGuestCount.value = 0;
+      totalAmount.value = 0;
+      totalCount.value = 0;
+
+      querySnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const mediaId = data.staff_in_charge;
+
+        totalGuestCount.value += Number(data.guest_count);
+        totalAmount.value += Number(data.amount);
+        totalCount.value++;
+
+        mediaAgencies[mediaId] = mediaAgencies[mediaId] || {
+          amount: 0,
+          guest_count: 0,
+          count: 0,
+        };
+
+        mediaAgencies[mediaId].amount += Number(data.amount);
+        mediaAgencies[mediaId].guest_count += Number(data.guest_count);
+        mediaAgencies[mediaId].count += 1;
+      });
+
+      salesRecordItems.value = Object.entries(mediaAgencies).map(([mediaId, info]) => ({
+        staff_in_charge: mediaId,
+        ...info
+      }));
+    });
+  };
+
 
   // 初期化関数
   const resetData = () => {

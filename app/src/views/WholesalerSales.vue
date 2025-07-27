@@ -4,7 +4,7 @@
   import SmText from '@/components/SmText.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import { db } from '@/assets/firebase.init';
-  import { collection, getDocs, setDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+  import { addDoc, collection, getDocs,onSnapshot, setDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
   import { onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
   import { shallowRef } from 'vue'
@@ -32,7 +32,6 @@
   const getWholesalerMaster = async () => {
     const querySnapshot = await getDocs(collection(db, "wholesalers"));
     wholesalers.value = querySnapshot.docs.map((doc) => {
-      console.log(doc.id)
       return { 'key': doc.id, 'title': doc.data().name };
     });
   }
@@ -54,7 +53,7 @@
 
   // 登録処理
   const submit = async () => {
-    await setDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, count.value), getSalePayload());
+    await addDoc(collection(db, TABLE_NAME, today.value, SUB_COLLECTION), getSalePayload());
     await afterSubmitOrUpdate();
     await totalAmountSubmit();
     insertToast();
@@ -100,17 +99,23 @@
     await getDailySalesMaster(today.value);
   }
 
+  let unsubscribeSalesRecords = null;
   // 日別データ取得
   const getDailySalesMaster = async (today) => {
     const subCollection = collection(db, TABLE_NAME, today, SUB_COLLECTION);
-    const querySnapshot = await getDocs(subCollection);
-    count.value = (querySnapshot.size + 1).toString().padStart(3, '0');
+    if(unsubscribeSalesRecords) {
+      unsubscribeSalesRecords();
+    }
 
-    dailySales.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      staff_name: doc.data().staff_name ?? null,
-    }));
+    unsubscribeSalesRecords = onSnapshot(subCollection, (querySnapshot) => {
+      dailySales.value = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        staff_name: doc.data().staff_name ?? null,
+      }));
+
+    })
+
     // 合計金額
     const total = dailySales.value.reduce((sum, { amount }) => {
       return sum + Number(amount ?? 0);

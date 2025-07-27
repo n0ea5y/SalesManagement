@@ -36,13 +36,12 @@ const logout = () => {
 <template>
   <nav class="p-4 bg-gray-200 flex gap-5 items-center relative">
     <!-- Always visible -->
-     <p  v-if="!store.isLoggedIn" style="background-color: rgb(229, 231, 235); color: black; border-bottom: none; font-weight: bold;">ホーム</p>
+     <p  v-if="!store.isLoggedIn" style="background-color: rgb(229, 231, 235); color: black; border-bottom: none; font-weight: bold;" class="text-xl">ラクシメ</p>
       <router-link
       style="background-color: rgb(229, 231, 235); color: black; border-bottom: none; font-weight: bold;"
       v-if="store.isLoggedIn"
       to="/"
-      class="px-2 py-1 bg-gray-200">ホーム</router-link>
-      <!-- <router-link v-if="store.isLoggedIn" to="/" class="text-base bg-gray-200 font-bold">ホーム</router-link> -->
+      class="px-2 bg-gray-200"><p class="text-xl">ラクシメ</p></router-link>
 
     <!-- Hamburger or Close icon -->
     <button

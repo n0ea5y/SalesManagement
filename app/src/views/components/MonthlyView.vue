@@ -1,6 +1,6 @@
 <script setup>
   import { onMounted, ref } from 'vue';
-  import { collection, doc, getDoc, getDocs} from "firebase/firestore";
+  import { collection, doc, getDoc, getDocs, onSnapshot} from "firebase/firestore";
   import { db } from '@/assets/firebase.init';
   import { formatNumber } from '../Tools/format';	
 
@@ -22,40 +22,71 @@
   const totalCount = ref(0);
 
   // 日別売上を月単位で取得
-  const getDailySales = async () => {
-    const staffSummary = {};
+  let unsubscribeMonthly = [];
 
-    // 全日のドキュメント取得を並列で実行
-    const promises = numbers.map(async (num) => {
-      const colRef = collection(db, "daily_sales", year.value, month.value, num, 'records');
-      const snapshot = await getDocs(colRef);
-      return snapshot.docs.map(doc => doc.data());
+const getDailySales = () => {
+  const staffSummary = {};
+  totalAmount.value = 0;
+  totalGuestCount.value = 0;
+  totalCount.value = 0;
+
+  // 前回の監視を解除
+  unsubscribeMonthly.forEach(unsub => unsub());
+  unsubscribeMonthly = [];
+
+  // 各日の records コレクションに onSnapshot を設定
+  numbers.forEach((num) => {
+    const colRef = collection(db, "daily_sales", year.value, month.value, num, "records");
+
+    const unsubscribe = onSnapshot(colRef, (snapshot) => {
+      // 初期化
+      const tempStaffSummary = {};
+      let tempTotalAmount = 0;
+      let tempGuestCount = 0;
+      let tempTotalCount = 0;
+
+      // 各日分の snapshot を集計
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const staffId = data.staff_in_charge;
+
+        if (!tempStaffSummary[staffId]) {
+          tempStaffSummary[staffId] = { amount: 0, guest_count: 0, count: 0 };
+        }
+
+        tempStaffSummary[staffId].amount += Number(data.amount) || 0;
+        tempStaffSummary[staffId].guest_count += Number(data.guest_count) || 0;
+        tempStaffSummary[staffId].count += 1;
+
+        tempTotalAmount += Number(data.amount) || 0;
+        tempGuestCount += Number(data.guest_count) || 0;
+        tempTotalCount++;
+      });
+
+      // 全体に反映（注意：ここでは日ごとに更新されるため、他日との合算には向かない）
+      // → なので全体を再集計する別関数を呼び出すように変更しても良い
+      Object.entries(tempStaffSummary).forEach(([id, data]) => {
+        if (!staffSummary[id]) {
+          staffSummary[id] = { amount: 0, guest_count: 0, count: 0 };
+        }
+        staffSummary[id].amount += data.amount;
+        staffSummary[id].guest_count += data.guest_count;
+        staffSummary[id].count += data.count;
+      });
+
+      totalAmount.value += tempTotalAmount;
+      totalGuestCount.value += tempGuestCount;
+      totalCount.value += tempTotalCount;
+
+      mediaAgenciesMonth.value = Object.entries(staffSummary).map(([staff_in_charge, data]) => ({
+        staff_in_charge,
+        ...data
+      }));
     });
 
-    // 全日のデータが揃うのを待つ
-    const allDaysData = await Promise.all(promises);
-
-    // 平坦化して一気に集計
-    allDaysData.flat().forEach(data => {
-      const staffId = data.staff_in_charge;
-      if (!staffSummary[staffId]) {
-        staffSummary[staffId] = { amount: 0, guest_count: 0, count: 0 };
-      }
-      staffSummary[staffId].amount += Number(data.amount) || 0;
-      staffSummary[staffId].guest_count += Number(data.guest_count) || 0;
-      staffSummary[staffId].count++;
-
-
-      totalAmount.value += Number(data.amount) || 0;
-      totalGuestCount.value += Number(data.guest_count) || 0;
-      totalCount.value ++;
-    });
-
-    mediaAgenciesMonth.value = Object.entries(staffSummary).map(([staff_in_charge, data]) => ({
-      staff_in_charge,
-      ...data
-    }));
-  };
+    unsubscribeMonthly.push(unsubscribe);
+  });
+};
 
   // 日別売上目標一覧を取得
   const getTodaySalesTarget = async (year, month) => {

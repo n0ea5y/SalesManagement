@@ -47,10 +47,6 @@ const amountTest = (amount, rateStr) => {
   if(!amount || !rateStr) return; 
   const rate = Number(rateStr.replace('%', '')) / 100;
   const result = amount * rate;
-
-  console.log('金額:', amount);        // 16000
-  console.log('割合:', rateStr);       // "25%"
-  console.log('計算結果:', result);    // 4000
   return formatNumber(result);
 }
   // 日別売上を月単位で取得

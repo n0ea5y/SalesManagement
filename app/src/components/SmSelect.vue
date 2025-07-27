@@ -20,6 +20,10 @@
       type: Boolean,
       default: false,
     },
+    multiple:{
+      type: Boolean,
+      default: false,
+    },
     required:{
       type: Boolean,
       default: false,
@@ -38,6 +42,7 @@
     :item-value="itemValue"
     :return-object="returnObj"
     :required="required"
+    :multiple="multiple"
     v-model="modelValue"
     variant="outlined"
     append-icon=""

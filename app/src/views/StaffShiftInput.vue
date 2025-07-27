@@ -5,7 +5,7 @@
   import SmText from '@/components/SmText.vue';
   import { onMounted, ref, watch } from 'vue';
   import { db } from '@/assets/firebase.init';
-  import { collection, getDocs, query, where, addDoc, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
+  import { collection, getDocs, query, where, addDoc, onSnapshot, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
 
   onMounted(async () => {
@@ -48,18 +48,26 @@
     })
   }
   
+  let unsubscribeSalesRecords = null
   const getStaffHoulyWagePayload = async (today) => {
     const subCollection = collection(db, TABLE_NAME, today, SUB_COLLECTION);
-    const querySnapshot = await getDocs(subCollection);
-    count.value = (querySnapshot.size + 1).toString().padStart(3, '0');
-    staffhourlywageItems.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+
+        // すでに購読中の監視があれば解除
+    if (unsubscribeSalesRecords) {
+      unsubscribeSalesRecords();
+    }
+
+    unsubscribeSalesRecords = onSnapshot(subCollection, (querySnapshot) => {
+      staffhourlywageItems.value = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+    })
   }
   
   const submit = async () => {
-    await setDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, count.value), setStaffHoulyWagePayload());
+    await addDoc(collection(db, TABLE_NAME, today.value, SUB_COLLECTION), setStaffHoulyWagePayload());
     await afterSubmitOrUpdate(today.value);
     insertToast();
   }

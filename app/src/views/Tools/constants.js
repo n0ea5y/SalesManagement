@@ -34,7 +34,7 @@ export const MEDIA_LIST = [
   export const paymentMethods = [
     {title: '現金', key: 'cash'},
     {title: 'クレジットカード', key: 'card'},
-    {title: 'ポイント', key: 'point'},
+    {title: 'ポイント+現金', key: 'point'},
   ]
   export const staffcell = {
     'A4XVBnJMXjOMHzQ3tF4I': 'AE', //おーなー１

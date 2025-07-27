@@ -3,18 +3,18 @@
   import SmButton from '@/components/SmButton.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import SmText from '@/components/SmText.vue';
-  import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, PLANS, YES_NO_OPTIONS, paymentMethods } from './Tools/constants';
+  import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, paymentMethods } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
-  import { collection, getDocs, setDoc, updateDoc, where, doc, query, deleteDoc } from "firebase/firestore";
+  import { addDoc, collection, getDocs, setDoc, updateDoc, where, doc, onSnapshot, query, deleteDoc } from "firebase/firestore";
   import { computed, onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
-  import { zeroPadding } from './Tools/format';
 
   onMounted(() => {
     getMediaAgencies();
-    getSalesRecords();
+    getSalesRecordsRealtime();
     getStaff();
   })
+  let unsubscribeSalesRecords = null;
 
   const dialog = ref(false)         //ダイアログ開閉フラグ
   const salesRecords = ref({});     // 登録データ格納
@@ -29,7 +29,7 @@
   const day = computed(() => today.value.split('-')[2])
 
   watch(today, (newVal, oldVal) => {
-    getSalesRecords();
+    getSalesRecordsRealtime();
   })
   
   // テーブルヘッダー
@@ -40,8 +40,8 @@
     {title: 'スタッフ名', key: 'staff_id'},
     {title: '人数', key: 'guest_count'},
     {title: 'プラン', key: 'plan'},
-    {title: 'お通し', key: 'otoshi'},
-    {title: 'フード数', key: 'food_count'},
+    {title: '支払い方法', key: 'pyment_method'},
+    {title: 'ポイント', key: 'point'},
     {title: '金額', key: 'amount'},
     {title: '', key: 'btn-area'},
   ];
@@ -55,8 +55,8 @@
 
   // 登録処理
   const submit = async () => {
-    await setDoc(doc(db, "daily_sales", year.value, month.value, day.value, 'records', zeroPadding(count.value, 3)), salesRecords.value);
-    getSalesRecords();
+    await addDoc(collection(db, "daily_sales", year.value, month.value, day.value, 'records'), salesRecords.value);
+    getSalesRecordsRealtime();
     dialog.value = false
     insertToast();
   }
@@ -65,18 +65,18 @@
   const update = async () => {
     const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', salesRecords.value.id);
     await updateDoc(docRef, salesRecords.value);
-    getSalesRecords();
+    getSalesRecordsRealtime();
     dialog.value = false
     updateToast();
   }
   
   // 削除処理
   const remove = async (v) => {
-    const deleteFlag = confirm('ほんとうにさくじょしてもよいですか？')
+    const deleteFlag = confirm('本当に削除しても良いですか？')
     if(deleteFlag){
       const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', v.id);
       await deleteDoc(docRef);
-      getSalesRecords();
+      getSalesRecordsRealtime();
       deleteToast();
     }
     dialog.value = false
@@ -84,17 +84,21 @@
   }
 
   // 登録データ一覧取得
-  const getSalesRecords  = async () => {
+  const getSalesRecordsRealtime = () => {
     const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
-    const querySnapshot = await getDocs(docRef);
-    salesRecordItems.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
 
-    // 登録数のカウント(0なら1,0以外なら登録数+1)
-    count.value = querySnapshot.size ? querySnapshot.size + 1 : 1;
-  }
+    // すでに購読中の監視があれば解除
+    if (unsubscribeSalesRecords) {
+      unsubscribeSalesRecords();
+    }
+
+    unsubscribeSalesRecords = onSnapshot(docRef, (querySnapshot) => {
+      salesRecordItems.value = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    });
+  };
 
   // メディアエージェント一覧取得
   const getMediaAgencies = async () => {
@@ -117,7 +121,7 @@
   // テーブルrow表示(担当者)
   function getMediaAgentTitleByKey(key) {
     const found = mediaAgencies.value.find(item => item.key === key);
-    return found ? found.title : null; 
+    return found ? found.title : null;
   }
 
   // テーブルrow表示(スタッフ)
@@ -131,6 +135,12 @@
     if(!v) return;
     return '￥' + Number(v).toLocaleString() + '円';
   }
+
+  const pymentMethodMapping = (key) => {
+    paymentMethods.find(v => v.key === key)
+    const item = paymentMethods.find(v => v.key === key);
+    return item ? item.title : null
+  }
 </script>
 
 <template>
@@ -140,17 +150,17 @@
     </div>
     <div class="flex overflow-x-auto">
       <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems">
-       <template v-slot:item="{item}">
+        <template v-slot:item="{item}">
         <tr :class="[!item.amount ? 'bg-red-200': '']">
           <td>{{ item.entry_time }}</td>
-          <td>{{ item.table_number }}</td>
+          <td>{{ item.table_number.join(',') }}</td>
           <td>{{ getMediaAgentTitleByKey(item.staff_in_charge) }}</td>
           <td>{{ getStaffNameMapping(item.staff_id) }}</td>
           <td>{{ item.guest_count }}</td>
           <td>{{ item.plan }}</td>
-          <td>{{ item.otoshi }}</td>
-          <td>{{ item.food_count }}</td>
-          <td>{{ item.point ? formatWithCommas(Number(item.amount) + Number(item.point)) : formatWithCommas(Number(item.amount))}}</td>
+          <td>{{ pymentMethodMapping(item.pyment_method) }}</td>
+          <td>{{ item.point }}</td>
+          <td>{{ formatWithCommas(item.amount)}}</td>
           <td>
             <div class="flex gap-5">
               <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="error" @click="() => { remove(item) }">
@@ -190,18 +200,16 @@
               <input id="time" type="time" v-model="salesRecords.entry_time">
             </div>
           </div>
-          <SmSelect label="卓番" :items="TABLE_NUMBER" v-model="salesRecords.table_number" required></SmSelect>
+          <SmSelect label="卓番" :items="TABLE_NUMBER" v-model="salesRecords.table_number" multiple required></SmSelect>
           <SmSelect label="担当者" :items="mediaAgencies" v-model="salesRecords.staff_in_charge" required></SmSelect>
           <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.staff_in_charge == GAIHAN_ID"></SmSelect>
           <SmSelect label="人数" :items="GET_NUMBER(50)" v-model="salesRecords.guest_count" required></SmSelect>
-          <SmSelect label="プラン" :items="PLANS" v-model="salesRecords.plan" required></SmSelect>
-          <SmSelect label="お通し" :items="YES_NO_OPTIONS" v-model="salesRecords.otoshi" required></SmSelect>
-          <SmSelect label="フード数" :items="GET_NUMBER(10)" v-model="salesRecords.food_count" required></SmSelect>
+          <SmText label="プラン" :bordernone="false" v-model="salesRecords.plan"></SmText>
           <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="salesRecords.amount != ''"></SmSelect>
           <SmText v-if="salesRecords.pyment_method == 'point'" label="利用ポイント数" :bordernone="false" v-model="salesRecords.point" required></SmText>
           <SmText label="金額" :bordernone="false" v-model="salesRecords.amount"></SmText>
           <div class="flex justify-end gap-2">
-            <SmButton :label="addMode ? '登録' : 'こうしん'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
+            <SmButton :label="addMode ? '登録' : '更新'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
             <SmButton label="とじる" htmlType="button" class="px-4 py-1 mt-5 mr-3 ml-2" type="none" @click="() => {
               addMode = true
               salesRecords = {};
