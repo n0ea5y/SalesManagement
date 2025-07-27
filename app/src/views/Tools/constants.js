@@ -37,14 +37,15 @@ export const MEDIA_LIST = [
     {title: 'ポイント', key: 'point'},
   ]
   export const staffcell = {
-    'DwnHZxQ8ns1cjXW9o4cq': 'AE', //ひかる
+    'A4XVBnJMXjOMHzQ3tF4I': 'AE', //おーなー１
     'mT16rmjAOIO0VmcTsheN': 'AD' //りゅうや
   }
 
 
-  export const staffid = {
-    'DwnHZxQ8ns1cjXW9o4cq': 'C',
-    'mT16rmjAOIO0VmcTsheN': 'F',
+  export const staffid= {
+    'DwnHZxQ8ns1cjXW9o4cq': 'AW', //おーな２２
+    'A4XVBnJMXjOMHzQ3tF4I': 'AZ', //おーなー１
+    'mT16rmjAOIO0VmcTsheN': 'BC' //りゅうや
   }
 export const GAIHAN_ID = 'SiBHolMYOW9dzytgYzPW';
 

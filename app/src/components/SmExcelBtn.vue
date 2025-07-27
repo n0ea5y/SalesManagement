@@ -61,42 +61,52 @@ const execlDL = async () => {
     if (Object.keys(element.staffData).length !== 0) {
       const num = element.day
       Object.entries(element.staffData).forEach(([staffId, info]) => {
-        sheet.getCell(media[staffId] + num).value = info.count
+        sheet.getCell(media[staffId] + (Number(num) + 2)).value = info.count
         const cell1 = incrementExcelColumn(media[staffId])
-        sheet.getCell(cell1 + num).value = info.guest_count
+        sheet.getCell(cell1 + (Number(num) + 2)).value = info.guest_count
         const cell2 = incrementExcelColumn(cell1)
-        sheet.getCell(cell2 + num).value = info.amount
+        sheet.getCell(cell2 + (Number(num) + 2)).value = info.amount
       })
     }
   })
 
+  console.log('test1')
   // げんきん
   Object.entries(amount_cash).forEach(([day, total]) => {
     sheet.getCell('AF' + (Number(day) + 2)).value = total
   });
+  console.log('test2')
   // かーど
   Object.entries(amount_card).forEach(([day, total]) => {
     sheet.getCell('AG' + (Number(day) + 2)).value = total
   });
+
+  console.log('test3')
   // ぽいんと
+  console.log(amount_point);
   Object.entries(amount_point).forEach(([day, total]) => {
     sheet.getCell('AH' + (Number(day) + 2)).value = total
   });
+  console.log('test4')
   // りょうしゅうしょ
   Object.entries(dayWholesalersTotal).forEach(([day, total]) => {
     sheet.getCell('AJ' + (Number(day) + 2)).value = total
   });
 
 
+  console.log('test5')
   // ひべつもくひょうにゅうりょく
+  console.log(targetData);
   for (const [key, value] of Object.entries(targetData)) {
-    sheet.getCell('AC' + key).value = value
+    sheet.getCell('AC' + (Number(key) + 2)).value = value
   }
 
+  console.log('test6')
+  // がいはんにゅうりょく
+  // console.log(staffList);
   const sheet1 = workbook.worksheets[1]
   for (const [key, value] of Object.entries(staffList)) {
     if (Object.keys(value).length === 0) continue;
-
     for (const [innerKey, innerValue] of Object.entries(value)) {
         sheet1.getCell(staffid[innerKey] + (Number(key) + 1)).value = innerValue.count;
         const cell1 = incrementExcelColumn(staffid[innerKey])
@@ -106,6 +116,7 @@ const execlDL = async () => {
     }
   }
 
+  console.log('test7')
   const sheet2 = workbook.worksheets[2]
   // ぎょうしゃしはらいかきこみ
 for (const [key, value] of Object.entries(wholesalersData)) {
@@ -118,19 +129,23 @@ for (const [key, value] of Object.entries(wholesalersData)) {
   }
 }
 
+  console.log('test8')
 // きゅうりょう（ばいと）
   const sheet3 = workbook.worksheets[3];
+  console.log(daily_salary);
+if (Object.keys(daily_salary).length !== 0) {
   Object.entries(daily_salary).forEach(([key, value]) => {
-    if(value.length != 0){
+    if (value.length !== 0) {
       value.forEach(element => {
         const hourlyWage = Number(staffWages.value[element.name]);
         const before22 = Number(element.before22 ?? 0) * hourlyWage;
-        const after22  = Number(element.after22  ?? 0) * hourlyWage * 1.25;
+        const after22  = Number(element.after22 ?? 0) * hourlyWage * 1.25;
         const total = before22 + after22;
-        sheet3.getCell(staffcell[element.name] + (Number(key) + 1)).value = total
+        sheet3.getCell(staffcell[element.name] + (Number(key) + 1)).value = total;
       });
     }
   });
+}
   // =============================================
 
   // 4. バッファへ書き出し
@@ -146,8 +161,8 @@ for (const [key, value] of Object.entries(wholesalersData)) {
 
 // でーたをまとめる
 const getSelectMonthDayData = async (year, month) => {
-  const daysInMonth = new Date(year, month, 0).getDate()
-  const days = [...Array(daysInMonth)].map((_, i) => i + 1)
+const daysInMonth = new Date(year, month, 0).getDate();
+const days = [...Array(daysInMonth)].map((_, i) => String(i + 1).padStart(2, '0'));
 
   const targetDay = await getDailyTarget(days, year, month)
   const [mediaData, amount_cash, amount_card, amount_point] = await getTest(days, year, month)
@@ -331,17 +346,17 @@ const getTest = async (days, year, month) => {
         amount_card[dayStr] += Number(data.amount);
       }else if(data.pyment_method == 'point'){
         amount_cash[dayStr] += Number(data.amount);
-        amount_point[dayStr] += Number(data.amount);
+        amount_point[dayStr] += Number(data.point);
       }
 
       if (!media_agencies[dayStr][key]) {
         media_agencies[dayStr][key] = {
-          amount: Number(data.amount),
+          amount: data.point ? Number(data.amount) + Number(data.point) : Number(data.amount) ,
           guest_count: Number(data.guest_count),
           count: 1,
         }
       } else {
-        media_agencies[dayStr][key].amount += Number(data.amount)
+        media_agencies[dayStr][key].amount += data.point ? Number(data.amount) + Number(data.point) : Number(data.amount)
         media_agencies[dayStr][key].guest_count += Number(data.guest_count)
         media_agencies[dayStr][key].count++
       }

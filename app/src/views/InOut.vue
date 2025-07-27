@@ -150,7 +150,7 @@
           <td>{{ item.plan }}</td>
           <td>{{ item.otoshi }}</td>
           <td>{{ item.food_count }}</td>
-          <td>{{ formatWithCommas(item.amount)}}</td>
+          <td>{{ item.point ? formatWithCommas(Number(item.amount) + Number(item.point)) : formatWithCommas(Number(item.amount))}}</td>
           <td>
             <div class="flex gap-5">
               <v-btn class="rounded" size="x-small" icon="fa:fas fa-edit" base-color="error" @click="() => { remove(item) }">
