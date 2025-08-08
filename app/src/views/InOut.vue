@@ -204,10 +204,10 @@
           <SmSelect label="担当者" :items="mediaAgencies" v-model="salesRecords.staff_in_charge" required></SmSelect>
           <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.staff_in_charge == GAIHAN_ID"></SmSelect>
           <SmSelect label="人数" :items="GET_NUMBER(50)" v-model="salesRecords.guest_count" required></SmSelect>
-          <SmText label="プラン" :bordernone="false" v-model="salesRecords.plan"></SmText>
-          <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="salesRecords.amount != ''"></SmSelect>
+          <SmText label="プラン" :bordernone="false" v-model="salesRecords.plan" required></SmText>
+          <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="Boolean(salesRecords.amount)"></SmSelect>
           <SmText v-if="salesRecords.pyment_method == 'point'" label="利用ポイント数" :bordernone="false" v-model="salesRecords.point" required></SmText>
-          <SmText label="金額" :bordernone="false" v-model="salesRecords.amount"></SmText>
+          <SmText label="金額" :bordernone="false" v-model="salesRecords.amount" :required="Boolean(salesRecords.pyment_method)"></SmText>
           <div class="flex justify-end gap-2">
             <SmButton :label="addMode ? '登録' : '更新'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
             <SmButton label="とじる" htmlType="button" class="px-4 py-1 mt-5 mr-3 ml-2" type="none" @click="() => {
