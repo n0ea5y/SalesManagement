@@ -192,7 +192,6 @@
     </div>
     <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="openDialog" />
     <v-dialog v-model="dialog">
-      {{ salesRecords }}
       <form @submit.prevent="addMode ? submit() : update()">
         <v-card class="flex flex-col gap-5 py-4 px-2">
           <div class="flex gap-5">

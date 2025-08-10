@@ -29,6 +29,7 @@
 });
 
   watch(() => props.parentDate, (newVal) => {
+    dailySalesTarget.value.today = newVal
     getDailySalesTarget();
   })
 
@@ -66,6 +67,7 @@
   }
 
   watch(() => dailySale.value , (newVal) => {
+    if(newVal.length == 0)return;
     dailySalesTarget.value = { ...newVal[0]};
   })
 

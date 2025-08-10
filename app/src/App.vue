@@ -18,20 +18,40 @@
   }
   vModel.value = formatDate(targetDate);
 
+  function incrementDate() {
+  if (!vModel.value) {
+    vModel.value = formatDate(new Date());
+    return;
+  }
+  const date = new Date(vModel.value);
+  date.setDate(date.getDate() + 1);
+  vModel.value = formatDate(date);
+}
+function decrementDate() {
+  if (!vModel.value) {
+    vModel.value = formatDate(new Date());
+    return;
+  }
+  const date = new Date(vModel.value);
+  date.setDate(date.getDate() - 1);
+  vModel.value = formatDate(date);
+}
 </script>
 
 <template>
   <AuthLayout>
     <HeaderView />
-    <div class="w-[180px] mx-auto mt-5">
-      <v-text-field
-        label="日付"
-        type="date"
-        variant="underlined"
-        density="compact"
-        v-model="vModel"
-      />
-    </div>
+    <div class="w-[250px] gap-4 mx-auto mt-5 flex">
+    <button @click="decrementDate" class="pb-[10px]"><span class="mdi mdi-arrow-left text-[25px]"></span></button>
+    <v-text-field
+      label="日付"
+      type="date"
+      variant="underlined"
+      density="compact"
+      v-model="vModel"
+    />
+    <button @click="incrementDate" class="pb-[10px]"><span class="mdi mdi-arrow-right text-[25px]"></span></button>
+  </div>
   </AuthLayout>
   <RouterView v-slot="{ Component }">
     <component :is="Component" :parentDate="vModel" />
