@@ -2,6 +2,7 @@
   import SmButton from '@/components/SmButton.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import SmText from '@/components/SmText.vue';
+  import { userStatus } from '../stores/userStatus'
   import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, paymentMethods } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
   import { addDoc, collection, getDocs, updateDoc, where, doc, onSnapshot, query, deleteDoc } from "firebase/firestore";
@@ -18,6 +19,7 @@
     getStaff();
   })
 
+  const store = userStatus();
   const dialog = ref(false)         //ダイアログ開閉フラグ
   const salesRecords = ref({today: props.parentDate});     // 登録データ格納
   const salesRecordItems = ref([]); // 登録データ一覧格納
@@ -205,9 +207,11 @@
           <SmSelect v-if="salesRecords.staff_in_charge === GAIHAN_ID" label="スタッフ名" :items="staffItem" itemTitle="name" itemValue="id" v-model="salesRecords.staff_id" :required="salesRecords.staff_in_charge == GAIHAN_ID"></SmSelect>
           <SmSelect label="人数" :items="GET_NUMBER(50)" v-model="salesRecords.guest_count" required></SmSelect>
           <SmText label="プラン" :bordernone="false" v-model="salesRecords.plan" required></SmText>
-          <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="Boolean(salesRecords.amount)"></SmSelect>
-          <SmText v-if="salesRecords.pyment_method == 'point'" label="利用ポイント数" :bordernone="false" v-model="salesRecords.point" required></SmText>
-          <SmText label="金額" :bordernone="false" v-model="salesRecords.amount" :required="Boolean(salesRecords.pyment_method)"></SmText>
+          <div v-if="store.isLoggedIn">
+            <SmSelect label="支払い方法" :items="paymentMethods" v-model="salesRecords.pyment_method" :required="Boolean(salesRecords.amount)"></SmSelect>
+            <SmText v-if="salesRecords.pyment_method == 'point'" label="利用ポイント数" :bordernone="false" v-model="salesRecords.point" required></SmText>
+            <SmText label="金額" :bordernone="false" v-model="salesRecords.amount" :required="Boolean(salesRecords.pyment_method)"></SmText>
+          </div>
           <div class="flex justify-end gap-2">
             <SmButton :label="addMode ? '登録' : '更新'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
             <SmButton label="とじる" htmlType="button" class="px-4 py-1 mt-5 mr-3 ml-2" type="none" @click="() => {
