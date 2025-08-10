@@ -1,190 +1,113 @@
 <script setup>
   import { onMounted, ref, watch } from 'vue';
-  import { getDocs, collection, getDoc, setDoc, doc, addDoc, onSnapshot } from "firebase/firestore";
   import { db } from '@/assets/firebase.init';
-  import SmText from '@/components/SmText.vue';
-  import SmButton from '@/components/SmButton.vue';
-  import { insertToast, updateToast } from '../Tools/Toast';
+  import { collection, getDocs, where, onSnapshot, query } from "firebase/firestore";
   import { formatNumber } from '../Tools/format';
 
-  onMounted(() => {
-    getMediaAgent();
-    getDailySales();
-    getDailySalesTarget();
+  const props = defineProps({
+    parentDate: {
+      type: String,
+      required: true
+    }
   })
 
-  const emit = defineEmits(['actions']);
+  onMounted( async () => {
+    await getSalesRecordsRealtime()
+    await getMediaAgencies();
+  })
 
-  const year = defineModel('year');
-  const month = defineModel('month');
-  const day = defineModel('day');
+  const salesRecordItems = ref([]);
+  const mediaAgencies = ref([]);
+  const total = ref([]);
 
-  const salesRecordItems = ref([]); // mediaAgentのキーでまとめて格納
-  const todaySalesTarget = ref(null);
-  const outPutSalesTarget = ref(null);
-  const mediaAgentItems = ref([]);  // 媒体一覧の取得
-  const totalCount = ref(0);  // 日別の組数
-  const totalGuestCount = ref(0);  // 日別の来客数
-  const totalAmount = ref(0);  // 日別の金額
-  const dialog = ref(false);
-  const addMode = ref(true);
+  watch(() => props.parentDate, async () => {
+    await getSalesRecordsRealtime()
+  })
 
-  watch([year, month, day], () => {
-    getDailySales();
-    getDailySalesTarget();
-  });
+  // 登録データ一覧取得
+  const getSalesRecordsRealtime = async () => {
+    const docRef = collection(db, "daily_sales");
+    const q = query(
+      docRef,
+      where("today", "==", props.parentDate),
+    );
 
-  // 媒体取得
-  const getMediaAgent = async () => {
-    const docRef = collection(db, 'media_agencies');
-    const querySnapshot = await getDocs(docRef);
-    mediaAgentItems.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  }
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const staffMap = {};
+      const totalData = { guest_count: 0, amount: 0, count: 0 };
 
-  // 当日の売上目標登録
-  const submit = async () => {
-    await setDoc(doc(db, 'daily_sales_target', year.value, month.value, day.value), {
-      day_sales: todaySalesTarget.value,
-    });
-    addMode.value ? insertToast() : updateToast();
-    dialog.value = false;
-    getDailySalesTarget()
-    emit('actions');
-  }
-
-  // 当日の売上目標取得
-  let unsubscribeDailyTarget = null;
-
-  const getDailySalesTarget = () => {
-    const docRef = doc(db, 'daily_sales_target', year.value, month.value, day.value);
-
-    // すでに購読している場合は解除
-    if (unsubscribeDailyTarget) {
-      unsubscribeDailyTarget();
-    }
-
-    // Firestore ドキュメントのリアルタイム監視
-    unsubscribeDailyTarget = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        todaySalesTarget.value = docSnap.data().day_sales;
-        outPutSalesTarget.value = docSnap.data().day_sales;
-        addMode.value = false;
-      } else {
-        todaySalesTarget.value = 0;
-        outPutSalesTarget.value = 0;
-        addMode.value = true;
-      }
-    });
-  };
-
-  let unsubscribeSalesRecords = null;
-    // 日別売上一覧リアルタイム取得
-  const getDailySales = () => {
-    // resetData();
-
-    const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
-
-    // すでに購読がある場合は解除
-    if (unsubscribeSalesRecords) {
-      unsubscribeSalesRecords();
-    }
-
-    // onSnapshot によるリアルタイム監視
-    unsubscribeSalesRecords = onSnapshot(docRef, (querySnapshot) => {
-      let mediaAgencies = {};
-      totalGuestCount.value = 0;
-      totalAmount.value = 0;
-      totalCount.value = 0;
-
-      querySnapshot.docs.forEach(doc => {
+      snapshot.forEach(doc => {
         const data = doc.data();
-        const mediaId = data.staff_in_charge;
+        const id = data.staff_in_charge;
 
-        totalGuestCount.value += Number(data.guest_count);
-        totalAmount.value += Number(data.amount);
-        totalCount.value++;
+        if (!staffMap[id]) {
+          staffMap[id] = {
+            media_id: id,
+            count: 0,
+            guest_count: 0,
+            amount: 0
+          };
+        }
 
-        mediaAgencies[mediaId] = mediaAgencies[mediaId] || {
-          amount: 0,
-          guest_count: 0,
-          count: 0,
-        };
+        staffMap[id].guest_count += data.guest_count || 0;
+        staffMap[id].amount += parseInt(data.amount) || 0;
+        staffMap[id].count++;
 
-        mediaAgencies[mediaId].amount += Number(data.amount);
-        mediaAgencies[mediaId].guest_count += Number(data.guest_count);
-        mediaAgencies[mediaId].count += 1;
+         // 全体合計
+      totalData.guest_count += data.guest_count || 0;
+      totalData.amount += parseInt(data.amount) || 0;
+      totalData.count++;
       });
 
-      salesRecordItems.value = Object.entries(mediaAgencies).map(([mediaId, info]) => ({
-        staff_in_charge: mediaId,
-        ...info
-      }));
+      // 最終的に配列として reactive にセット
+      salesRecordItems.value = Object.values(staffMap);
+      total.value = [totalData];
     });
+    return unsubscribe;
   };
 
-
-  // 初期化関数
-  const resetData = () => {
-    salesRecordItems.value = []
-    totalCount.value = 0
-    totalGuestCount.value = 0
-    totalAmount.value = 0
-    todaySalesTarget.value = 0
-    outPutSalesTarget.value = 0
-    addMode.value = true;
+  // メディアエージェント一覧取得
+  const getMediaAgencies = async () => {
+    const querySnapshot = await getDocs(collection(db, "media_agencies"));
+    mediaAgencies.value = querySnapshot.  docs.map((doc) => {
+      return {key: doc.id, title: doc.data().name}
+    });
   }
-
-  // メディア担当者の名前を取得。該当がなければ空文字を返す
-  const mediaAgentMapping = (v) => {
-    const item = mediaAgentItems.value.find(item => item.id === v)
-    return item?.name || '';
+  const mediafMapping = (v) => {
+    if (!v) return;
+    const media = mediaAgencies.value.find((item) => item.key === v);
+    return media ? media.title : '';
   }
-
 </script>
 
 <template>
-  <div class="flex justify-between items-center">
-    <p>日別売上目標<span :class="outPutSalesTarget ? '' : 'text-red-500'">{{ outPutSalesTarget ? '：' + formatNumber(outPutSalesTarget) : '：設定されていません' }}</span></p>
-    <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog">
-    </SmButton>
-
-    <v-dialog v-model="dialog" max-width="80%">
-      <v-card prepend-icon="mdi-account" title="日別売上設定">
-        <div class="w-full pb-5 px-2 mx-auto">
-          <form @submit.prevent="submit()">
-            <SmText label="目標" v-model="todaySalesTarget" required></SmText>
-            <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3"
-              @click="() => { dialog = false }" />
-            <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
-            <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
-          </form>
-        </div>
-      </v-card>
-    </v-dialog>
-  </div>
   <p></p>
-  <v-data-table :items="salesRecordItems" hide-default-header hide-default-footer :items-per-page="-1"
-    class="bg-transparent max-h-[300px] w-full">
-    <template v-slot:item="{ item }">
-      <tr class="text-sm text-center border-b">
-        <td class="py-1 px-3 w-2/12">{{ mediaAgentMapping(item.staff_in_charge) }}</td>
-        <td class="py-1 px-3 w-2/12">{{ item.count }}組</td>
-        <td class="py-1 px-3 w-2/12">{{ item.guest_count }}人</td>
-        <td class="py-1 px-3 w-4/12">{{ formatNumber(item.amount) }}</td>
-      </tr>
-    </template>
-  </v-data-table>
+  <div class="overflow-x-auto">
+    <v-card class="w-[98%] mx-auto mb-2" subtitle="日別売上">
+      <v-data-table :items="salesRecordItems" :items-per-page="-1" hide-default-header hide-default-footer
+        class="bg-transparent max-h-[400px] w-full">
+        <template v-slot:item="{ item }">
+          <tr class="text-sm">
+            <td class="w-[160px] text-[13px]">{{ mediafMapping(item.media_id) }}</td>
+            <td class="w-[70px] text-[12px]">{{ item.guest_count }}人</td>
+            <td class="w-[70px] text-[12px]">{{ item.count }}組</td>
+            <td class="w-[130px] text-[13px]">{{ formatNumber(item.amount) }}</td>
+          </tr>
+        </template>
+      </v-data-table>
 
-  <table class="w-full mt-5 mb-5 text-sm text-center">
-    <tr class="font-bold">
-      <th class="py-1 px-3 w-2/12">合計</th>
-      <th class="py-1 px-3 w-2/12">{{ totalCount }}組</th>
-      <th class="py-1 px-3 w-2/12">{{ totalGuestCount }}人</th>
-      <th class="py-1 px-3 w-4/12">{{ formatNumber(totalAmount) }}</th>
-    </tr>
-  </table>
-
+      <v-data-table :items="total" :items-per-page="-1" hide-default-header hide-default-footer
+        class="bg-transparent max-h-[300px] w-full">
+        <template v-slot:item="{ item }">
+          <tr class="text-sm">
+            <td class="w-[160px] text-[13px] font-bold">合計</td>
+            <td class="w-[70px] text-[13px] font-bold">{{ item.guest_count }}人</td>
+            <td class="w-[70px] text-[13px] font-bold">{{ item.count }}組</td>
+            <td class="w-[130px] text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
+          </tr>
+        </template>
+      </v-data-table>
+    </v-card>
+  </div>
 </template>

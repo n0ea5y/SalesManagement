@@ -1,27 +1,73 @@
 <script setup>
-  import AuthLayout from '@/layouts/AuthLayout.vue';
   import DailyView from './components/DailyView.vue';
   import MonthlyView from './components/MonthlyView.vue';
   import SmText from '@/components/SmText.vue';
-  import { computed, ref, watch } from 'vue';
+  import { formatNumber } from './Tools/format';
+  import { computed, onMounted, ref, watch } from 'vue';
+  import { db } from '@/assets/firebase.init';
+  import { addDoc, collection, updateDoc, where, doc, onSnapshot, query, limit} from "firebase/firestore";
   import SmExcelBtn from '@/components/SmExcelBtn.vue';
   import axios from 'axios'
+  import SmButton from '@/components/SmButton.vue';
+  import { insertToast, updateToast } from './Tools/Toast';
+  
+  const props = defineProps({
+    parentDate: String
+  })
+
+  onMounted(() => {
+    getDailySalesTarget()
+  })
 
   const text = ref('')
 
-  const monthlyViewRef = ref(null)
-  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
-  const year = computed(() => today.value.split('-')[0])
-  const month = computed(() => today.value.split('-')[1])
-  const day = computed(() => today.value.split('-')[2])
+  const dailySalesTarget = ref({today: props.parentDate})
+  const dailySale = ref({});
+  const dialog = ref(false);
+  const addMode = computed(() => {
+  return !dailySale.value[0]?.target_sales;
+});
 
-  watch(month, async ()  => {
-   await monthlyViewRef.value.getTodaySalesTarget(year.value, month.value);
+  watch(() => props.parentDate, (newVal) => {
+    getDailySalesTarget();
   })
 
-  const actions = async () => {
-   await monthlyViewRef.value.getTodaySalesTarget(year.value, month.value);
+  // 当日の売上目標登録
+  const submit = async () => {
+    await addDoc(collection(db, 'daily_sales_target'), dailySalesTarget.value);
+    dialog.value = false;
+    insertToast();
   }
+
+  // 更新処理
+  const update = async () => {
+    const docRef = doc(db, "daily_sales_target", dailySalesTarget.value.id);
+    await updateDoc(docRef, dailySalesTarget.value);
+    dialog.value = false;
+    updateToast();
+  }
+
+  const getDailySalesTarget = () => {
+    const docRef = collection(db, "daily_sales_target");
+    const q = query(
+      docRef,
+      where("today", "==", props.parentDate),
+      limit(1),
+    );
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      dailySale.value = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    });
+
+    return unsubscribe;
+  }
+
+  watch(() => dailySale.value , (newVal) => {
+    dailySalesTarget.value = { ...newVal[0]};
+  })
 
   const test = async () => {
       if(!text.value) {
@@ -32,7 +78,6 @@
       'https://hw185yp245.execute-api.us-east-1.amazonaws.com/yokkoisho_omiya_api_line_bot/yokkoisho',
       { message: text.value }
     );
-    console.log(res.data);
   } catch (error) {
     console.error(error);
   }
@@ -41,25 +86,35 @@
 </script>
 
 <template>
-  <AuthLayout>
-    <div>
-      <v-text-field label="line botで送信する文言設定して" v-model="text"></v-text-field>
-      <v-btn @click="test">SEND</v-btn>
-    </div>
-    <div class="w-[50%] mx-auto mt-[-10px]">
-      <SmText type="date" bordernone v-model="today"></SmText>
-    </div>
-    <v-card class="w-[95%] px-2 py-2 mb-10 mx-auto">
-    <!-- 日別売上 -->
-      <DailyView  v-model:year="year" v-model:month="month" v-model:day="day" @actions="actions()"/>
-    </v-card>
+  <!-- <div>
+    <v-text-field label="line botで送信する文言設定して" v-model="text"></v-text-field>
+    <v-btn @click="test">SEND</v-btn>
+  </div> -->
+    <v-card class="w-[98%] px-4 py-2 mx-auto mb-2">
+      <div class="flex justify-between items-center">
+          <p>日別売上目標<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? '：' + formatNumber(dailySale[0]?.target_sales) : '：設定されていません' }}</span></p>
+          <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog"></SmButton>
 
-    <v-card class="w-[95%] px-2 py-2 mx-auto">
-    <!-- つき売上 -->
-      <MonthlyView ref="monthlyViewRef" v-model:year="year" v-model:month="month"/>
+      </div>
     </v-card>
-    <div class="text-end w-[98%] px-2 mt-[20px]">
-      <SmExcelBtn label="ExcelDL" :year=year :month="month"></SmExcelBtn>
+  <v-dialog v-model="dialog" max-width="80%">
+    <v-card prepend-icon="mdi-account" title="日別売上設定">
+      <div class="w-full pb-5 px-2 mx-auto">
+        <form @submit.prevent="addMode ? submit() : update()">
+          <SmText label="日別売上目標" v-model="dailySalesTarget.target_sales" required></SmText>
+          <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => { dialog = false }" />
+          <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
+          <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
+        </form>
+      </div>
+    </v-card>
+  </v-dialog>
+
+  <div class="mb-10">
+    <DailyView v-bind:parent-date="parentDate"/>
+  </div>
+
+    <div class="mb-10">
+      <MonthlyView v-bind:parent-date="parentDate"/>
     </div>
-  </AuthLayout>
 </template>

@@ -1,149 +1,113 @@
 <script setup>
-  import { onMounted, ref } from 'vue';
-  import { collection, doc, getDoc, getDocs, onSnapshot} from "firebase/firestore";
+  import { onMounted, ref, watch } from 'vue';
   import { db } from '@/assets/firebase.init';
-  import { formatNumber } from '../Tools/format';	
+  import { collection, getDocs, where, onSnapshot, query } from "firebase/firestore";
+  import { formatNumber } from '../Tools/format';
 
-  onMounted(() => {
-    getTodaySalesTarget(year.value, month.value);
-    getDailySales()
-    getMediaAgent()
+  const props = defineProps({
+    parentDate: {
+      type: String,
+      required: true
+    }
   })
 
-  const mediaAgenciesMonth = ref([]);
-  const mediaAgentItems = ref([]);  // 媒体一覧の取得
-  const numbers = [...Array(31).keys()].map(i => String(i + 1).padStart(2, '0')); // '01' 〜 '31'
-  const year = defineModel('year');      // 親から年を受け取る
-  const month = defineModel('month');    // 親から月を受け取る
-  const todaySalesTargetAll = ref(null); // 日別売上目標金額の合計格納
+  onMounted( async () => {
+    await getSalesRecordsRealtime()
+    await getMediaAgencies();
+  })
 
-  const totalAmount = ref(0);
-  const totalGuestCount = ref(0);
-  const totalCount = ref(0);
+  const salesRecordItems = ref([]);
+  const mediaAgencies = ref([]);
+  const total = ref([]);
 
-  // 日別売上を月単位で取得
-  let unsubscribeMonthly = [];
+  // 登録データ一覧取得
+  const getSalesRecordsRealtime = async () => {
+    const startDay = props.parentDate.substring(0, 8) + "01";
+    const parts = startDay.split('-');
+    const dateObj = new Date(parts[0], parts[1], parts[2]); //翌月の日付を取得
+    dateObj.setDate(dateObj.getDate() - 1); // 1日前
+    const lastDay = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1)}-${dateObj.getDate()}`
 
-const getDailySales = () => {
-  const staffSummary = {};
-  totalAmount.value = 0;
-  totalGuestCount.value = 0;
-  totalCount.value = 0;
+    const q = query(collection(db, "daily_sales"),
+      where("today", ">=", startDay),
+      where("today", "<=", lastDay)
+    );
 
-  // 前回の監視を解除
-  unsubscribeMonthly.forEach(unsub => unsub());
-  unsubscribeMonthly = [];
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const staffMap = {};
+      const totalData = { guest_count: 0, amount: 0, count: 0 };
 
-  // 各日の records コレクションに onSnapshot を設定
-  numbers.forEach((num) => {
-    const colRef = collection(db, "daily_sales", year.value, month.value, num, "records");
-
-    const unsubscribe = onSnapshot(colRef, (snapshot) => {
-      // 初期化
-      const tempStaffSummary = {};
-      let tempTotalAmount = 0;
-      let tempGuestCount = 0;
-      let tempTotalCount = 0;
-
-      // 各日分の snapshot を集計
       snapshot.forEach(doc => {
         const data = doc.data();
-        const staffId = data.staff_in_charge;
+        const id = data.staff_in_charge;
 
-        if (!tempStaffSummary[staffId]) {
-          tempStaffSummary[staffId] = { amount: 0, guest_count: 0, count: 0 };
+        if (!staffMap[id]) {
+          staffMap[id] = {
+            media_id: id,
+            count: 0,
+            guest_count: 0,
+            amount: 0
+          };
         }
 
-        tempStaffSummary[staffId].amount += Number(data.amount) || 0;
-        tempStaffSummary[staffId].guest_count += Number(data.guest_count) || 0;
-        tempStaffSummary[staffId].count += 1;
+        staffMap[id].guest_count += data.guest_count || 0;
+        staffMap[id].amount += parseInt(data.amount) || 0;
+        staffMap[id].count++;
 
-        tempTotalAmount += Number(data.amount) || 0;
-        tempGuestCount += Number(data.guest_count) || 0;
-        tempTotalCount++;
+         // 全体合計
+      totalData.guest_count += data.guest_count || 0;
+      totalData.amount += parseInt(data.amount) || 0;
+      totalData.count++;
       });
 
-      // 全体に反映（注意：ここでは日ごとに更新されるため、他日との合算には向かない）
-      // → なので全体を再集計する別関数を呼び出すように変更しても良い
-      Object.entries(tempStaffSummary).forEach(([id, data]) => {
-        if (!staffSummary[id]) {
-          staffSummary[id] = { amount: 0, guest_count: 0, count: 0 };
-        }
-        staffSummary[id].amount += data.amount;
-        staffSummary[id].guest_count += data.guest_count;
-        staffSummary[id].count += data.count;
-      });
-
-      totalAmount.value += tempTotalAmount;
-      totalGuestCount.value += tempGuestCount;
-      totalCount.value += tempTotalCount;
-
-      mediaAgenciesMonth.value = Object.entries(staffSummary).map(([staff_in_charge, data]) => ({
-        staff_in_charge,
-        ...data
-      }));
+      // 最終的に配列として reactive にセット
+      salesRecordItems.value = Object.values(staffMap);
+      total.value = [totalData];
     });
+    return unsubscribe;
+  };
 
-    unsubscribeMonthly.push(unsubscribe);
-  });
-};
-
-  // 日別売上目標一覧を取得
-  const getTodaySalesTarget = async (year, month) => {
-    resetData();
-    const colRef = collection(db, 'daily_sales_target', year, month);
-    const querySnapshot = await getDocs(colRef);
-
-    // 取得した日別売上目標を合計する
-    querySnapshot.forEach(doc => {
-      todaySalesTargetAll.value += Number(doc.data().day_sales); 
+  // メディアエージェント一覧取得
+  const getMediaAgencies = async () => {
+    const querySnapshot = await getDocs(collection(db, "media_agencies"));
+    mediaAgencies.value = querySnapshot.  docs.map((doc) => {
+      return {key: doc.id, title: doc.data().name}
     });
   }
-
-  // 媒体取得
-  const getMediaAgent = async () => {
-    const docRef = collection(db, 'media_agencies');
-    const querySnapshot = await getDocs(docRef);
-    mediaAgentItems.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  }
-
-  defineExpose({
-    getTodaySalesTarget,
-  });
-  
-  // メディア担当者の名前を取得。該当がなければ空文字を返す
-  const mediaAgentMapping = (v) => {
-    const item = mediaAgentItems.value.find(item => item.id === v)
-    return item?.name || '';
-  }
-  // 初期化
-  const resetData = () => {
-    todaySalesTargetAll.value = 0;
+  const mediafMapping = (v) => {
+    if (!v) return;
+    const media = mediaAgencies.value.find((item) => item.key === v);
+    return media ? media.title : '';
   }
 </script>
 
 <template>
-    <p>月売上目標<span>{{ todaySalesTargetAll ? '：' + formatNumber(todaySalesTargetAll) : '' }}</span></p>
-    <v-data-table :items="mediaAgenciesMonth" :items-per-page="-1" class="bg-transparent max-h-[300px]" hide-default-header hide-default-footer>
+  <div class="overflow-x-auto">
+    <v-card class="w-[98%] mx-auto mb-2" subtitle="月売上">
+      <v-data-table :items="salesRecordItems" :items-per-page="-1" hide-default-header hide-default-footer
+        class="bg-transparent max-h-[400px] w-full">
         <template v-slot:item="{ item }">
-            <tr class="text-sm text-center border-b">
-                <td class="py-1 px-3 w-2/12">{{ mediaAgentMapping(item.staff_in_charge)}}</td>
-                <td class="py-1 px-3 w-2/12">{{ item.count}}組</td>
-                <td class="py-1 px-3 w-2/12">{{ item.guest_count}}人</td>
-                <td class="py-1 px-3 w-4/12">{{ formatNumber(item.amount) }}</td>
-            </tr>
+          <tr class="text-sm">
+            <td class="w-[160px] text-[13px]">{{ mediafMapping(item.media_id) }}</td>
+            <td class="w-[70px] text-[12px]">{{ item.guest_count }}人</td>
+            <td class="w-[70px] text-[12px]">{{ item.count }}組</td>
+            <td class="w-[130px] text-[13px]">{{ formatNumber(item.amount) }}</td>
+          </tr>
         </template>
-    </v-data-table>
+      </v-data-table>
 
-    <table class="w-full mt-5 mb-5 text-sm text-center">
-            <tr class="font-bold">
-                <th class="py-1 px-3 w-2/12">合計</th>
-                <th class="py-1 px-3 w-2/12">{{ totalCount }}組</th>
-                <th class="py-1 px-3 w-2/12">{{ totalGuestCount}}人</th>
-                <th class="py-1 px-3 w-4/12">{{ formatNumber(totalAmount) }}</th>
-            </tr>
-    </table>
+      <v-data-table :items="total" :items-per-page="-1" hide-default-header hide-default-footer
+        class="bg-transparent max-h-[300px] w-full">
+        <template v-slot:item="{ item }">
+          <tr class="text-sm">
+            <td class="w-[160px] text-[13px] font-bold">合計</td>
+            <td class="w-[70px] text-[13px] font-bold">{{ item.guest_count }}人</td>
+            <td class="w-[70px] text-[13px] font-bold">{{ item.count }}組</td>
+            <td class="w-[130px] text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
+          </tr>
+        </template>
+      </v-data-table>
+    </v-card>
+  </div>
 </template>

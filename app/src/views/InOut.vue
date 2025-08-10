@@ -1,37 +1,36 @@
 <script setup>
-  import AuthLayout from '@/layouts/AuthLayout.vue';
   import SmButton from '@/components/SmButton.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import SmText from '@/components/SmText.vue';
   import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, paymentMethods } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
-  import { addDoc, collection, getDocs, setDoc, updateDoc, where, doc, onSnapshot, query, deleteDoc } from "firebase/firestore";
-  import { computed, onMounted, ref, watch } from 'vue';
+  import { addDoc, collection, getDocs, updateDoc, where, doc, onSnapshot, query, deleteDoc } from "firebase/firestore";
+  import { onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
+
+  const props = defineProps({
+    parentDate: String
+  })
 
   onMounted(() => {
     getMediaAgencies();
     getSalesRecordsRealtime();
     getStaff();
   })
-  let unsubscribeSalesRecords = null;
 
   const dialog = ref(false)         //ダイアログ開閉フラグ
-  const salesRecords = ref({});     // 登録データ格納
+  const salesRecords = ref({today: props.parentDate});     // 登録データ格納
   const salesRecordItems = ref([]); // 登録データ一覧格納
   const mediaAgencies = ref([]);    // 担当者格納
   const staffItem = ref([]);        // スタッフ一覧格納
-  const count = ref(0);             // 登録数格納
   const addMode = ref(true);
-  const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
-  const year = computed(() => today.value.split('-')[0])
-  const month = computed(() => today.value.split('-')[1])
-  const day = computed(() => today.value.split('-')[2])
 
-  watch(today, (newVal, oldVal) => {
+  watch(() => props.parentDate, (newVal) => {
+    salesRecords.value = {
+      today: newVal,
+    }
     getSalesRecordsRealtime();
-  })
-  
+  });
   // テーブルヘッダー
   const headers = [
     {title: '入店時間', key: 'entry_time'},
@@ -55,49 +54,47 @@
 
   // 登録処理
   const submit = async () => {
-    await addDoc(collection(db, "daily_sales", year.value, month.value, day.value, 'records'), salesRecords.value);
-    getSalesRecordsRealtime();
+    await addDoc(collection(db, "daily_sales"), salesRecords.value);
     dialog.value = false
     insertToast();
   }
 
   // 更新処理
   const update = async () => {
-    const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', salesRecords.value.id);
+    const docRef = doc(db, "daily_sales", salesRecords.value.id);
     await updateDoc(docRef, salesRecords.value);
-    getSalesRecordsRealtime();
     dialog.value = false
     updateToast();
   }
-  
+
   // 削除処理
   const remove = async (v) => {
     const deleteFlag = confirm('本当に削除しても良いですか？')
     if(deleteFlag){
-      const docRef = doc(db, "daily_sales", year.value, month.value, day.value, 'records', v.id);
+      const docRef = doc(db, "daily_sales", v.id);
       await deleteDoc(docRef);
-      getSalesRecordsRealtime();
       deleteToast();
     }
     dialog.value = false
-    
   }
 
   // 登録データ一覧取得
-  const getSalesRecordsRealtime = () => {
-    const docRef = collection(db, 'daily_sales', year.value, month.value, day.value, 'records');
+  const getSalesRecordsRealtime = async () => {
+    const docRef = collection(db, "daily_sales");
+    const q = query(
+      docRef,
+      where("today", "==", salesRecords.value.today),
+    );
 
-    // すでに購読中の監視があれば解除
-    if (unsubscribeSalesRecords) {
-      unsubscribeSalesRecords();
-    }
-
-    unsubscribeSalesRecords = onSnapshot(docRef, (querySnapshot) => {
-      salesRecordItems.value = querySnapshot.docs.map(doc => ({
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      salesRecordItems.value = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
     });
+
+    return unsubscribe;
   };
 
   // メディアエージェント一覧取得
@@ -141,13 +138,21 @@
     const item = paymentMethods.find(v => v.key === key);
     return item ? item.title : null
   }
+
+  const openDialog = () => {
+    const now = new Date();
+    const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    salesRecords.value.entry_time = hhmm;
+    salesRecords.value = {
+      today: props.parentDate,
+      entry_time: hhmm,
+    }
+    addMode.value = true
+    dialog.value = true
+  }
 </script>
 
 <template>
-  <AuthLayout>
-    <div class="w-1/2 mx-auto m-[-10px]">
-      <SmText type="date" bordernone v-model="today"></SmText>
-    </div>
     <div class="flex overflow-x-auto">
       <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems" :items-per-page="-1">
         <template v-slot:item="{item}">
@@ -182,16 +187,12 @@
             </div>
           </td>
         </tr>
-       </template> 
+      </template>
       </v-data-table>
     </div>
-
-    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="() => {
-      addMode = true
-      salesRecords = {};
-      dialog = true
-    }" />
+    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="openDialog" />
     <v-dialog v-model="dialog">
+      {{ salesRecords }}
       <form @submit.prevent="addMode ? submit() : update()">
         <v-card class="flex flex-col gap-5 py-4 px-2">
           <div class="flex gap-5">
@@ -212,12 +213,10 @@
             <SmButton :label="addMode ? '登録' : '更新'" class="px-4 py-1 mt-5 mr-3 ml-2" :type="addMode ? 'store': 'update'"/>
             <SmButton label="とじる" htmlType="button" class="px-4 py-1 mt-5 mr-3 ml-2" type="none" @click="() => {
               addMode = true
-              salesRecords = {};
               dialog = false
             }" />
           </div>
         </v-card>
       </form>
     </v-dialog>
-  </AuthLayout>
 </template>

@@ -46,7 +46,7 @@ const logout = () => {
     <!-- Hamburger or Close icon -->
     <button
       v-if="store.isLoggedIn"
-      class="ml-auto md:hidden z-50 relative"
+      class="ml-auto z-50 relative"
       @click="toggleMenu"
     >
       <span v-if="!menuOpen">
@@ -62,18 +62,18 @@ const logout = () => {
     </button>
 
     <!-- PC用メニュー -->
-    <div v-if="store.isLoggedIn" class="hidden md:flex gap-5 ml-5 relative">
+    <!-- <div v-if="store.isLoggedIn" class="hidden md:flex gap-5 ml-5 relative"> -->
       <!-- 管理画面ドロップダウン -->
-      <div class="relative" @mouseleave="adminOpen = false">
+      <!-- <div class="relative" @mouseleave="adminOpen = false">
         <button
           class="hover:underline"
           @click="toggleAdmin"
         >
           管理画面
-        </button>
+        </button> -->
 
         <!-- ドロップダウンメニュー -->
-        <transition name="fade">
+        <!-- <transition name="fade">
           <div
             v-if="adminOpen"
             class="absolute top-full left-0 mt-1 bg-white border rounded shadow-lg py-2 px-2 w-[150px] flex flex-col items-center gap-5 z-10"
@@ -84,20 +84,20 @@ const logout = () => {
           </div>
         </transition>
       </div>
-    </div>
+    </div> -->
 
     <!-- Logout Button (PCのみ) -->
-    <button
+    <!-- <button
       v-if="store.isLoggedIn"
       class="ml-auto text-xs border border-solid border-gray-500 rounded py-1 px-2 hidden md:block"
       @click="logout"
     >
       ログアウト
-    </button>
+    </button> -->
 
     <!-- マスクとモバイルメニュー -->
     <transition v-if="store.isLoggedIn" name="slide">
-      <div v-if="menuOpen" class="fixed inset-0 z-40 md:hidden">
+      <div v-if="menuOpen" class="fixed inset-0 z-40">
         <!-- 黒いマスク -->
         <div
           class="absolute inset-0 bg-black/70"

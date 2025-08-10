@@ -4,31 +4,37 @@
   import SmText from '@/components/SmText.vue';
   import SmSelect from '@/components/SmSelect.vue';
   import { db } from '@/assets/firebase.init';
-  import { addDoc, collection, getDocs,onSnapshot, setDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+  import { addDoc, collection, getDocs,onSnapshot, updateDoc, doc, deleteDoc, query, where } from "firebase/firestore";
   import { onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
   import { shallowRef } from 'vue'
 
+  const props = defineProps({
+    parentDate: String
+  })
+
   onMounted(async () => {
-    await getDailySalesMaster(today.value);
+    await getDailySalesMaster();
     await getMediaAgentMaster();
     await getWholesalerMaster();
   });
 
   const TABLE_NAME = 'whole_sales';
-  const SUB_COLLECTION = 'records';
 
   const dailySales = ref([]);
-  const todaySale = ref({});
+  const todaySale = ref({today: props.parentDate});
   const mediaAgencies = ref([]);
-  const totalAmount = ref({});
   const today = ref(new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replaceAll('/', '-'))
   const addMode = ref(true);
   const dialog = shallowRef(false)
-  const count = ref(null);
   const wholesalers = ref([]);
 
-
+  watch(() => props.parentDate, (newVal) => {
+    todaySale.value = {
+      today: newVal,
+    }
+    getDailySalesMaster();
+  });
   const getWholesalerMaster = async () => {
     const querySnapshot = await getDocs(collection(db, "wholesalers"));
     wholesalers.value = querySnapshot.docs.map((doc) => {
@@ -38,113 +44,68 @@
 
   // 日付が変わったらデータの取得を行う
   watch(() => today.value, (newVal) => {
-    getDailySalesMaster(newVal);
+    getDailySalesMaster();
   })
 
   // 更新ボタンが押されたら処理
   const rowClick = (value) => {
-    (value)
     addMode.value = false;
     todaySale.value = { ...value };
     dialog.value = true;
-
-    totalAmountSubmit();
   }
 
   // 登録処理
   const submit = async () => {
-    await addDoc(collection(db, TABLE_NAME, today.value, SUB_COLLECTION), getSalePayload());
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
+    await addDoc(collection(db, TABLE_NAME), todaySale.value);
+    await getDailySalesMaster();
     insertToast();
+    dialog.value = false;
   }
 
   // 更新処理
   const update = async () => {
-    await updateDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, todaySale.value.id), getSalePayload());
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
+    const docRef = doc(db, TABLE_NAME, todaySale.value.id);
+    await updateDoc(docRef, todaySale.value);
+    await getDailySalesMaster();
     updateToast();
     addMode.value = true;
+    dialog.value= false
   }
 
   // 削除処理
-  const remove = async (value) => {
+  const remove = async (v) => {
     const result = confirm('本当に削除しても良いですか？');
     if (!result) return;
-    await deleteDoc(doc(db, TABLE_NAME, today.value, SUB_COLLECTION, value.id));
-    await afterSubmitOrUpdate();
-    await totalAmountSubmit();
+    const docRef = doc(db, TABLE_NAME, v.id);
+    await deleteDoc(docRef);
+    await getDailySalesMaster();
     deleteToast();
     addMode.value = true;
   };
 
-  // 当日の売上登録
-  const totalAmountSubmit = async () => {
-    const [year, month, day] = today.value.split('-');
-    const yearMont = `${year}_${month}`;
-    await setDoc(doc(db, 'total_wholesaler_sales', yearMont, 'days', day), totalAmount.value);
-  }
-
-  // 登録データ
-  const getSalePayload = () => ({
-    'key': todaySale.value.key ?? null,
-    'amount': todaySale.value.amount ?? null,
-  })
-
-  // 登録、更新後に行う処理
-  const afterSubmitOrUpdate = async () => {
-    todaySale.value = {}
-    dialog.value = false;
-    await getDailySalesMaster(today.value);
-  }
-
-  let unsubscribeSalesRecords = null;
   // 日別データ取得
-  const getDailySalesMaster = async (today) => {
-    const subCollection = collection(db, TABLE_NAME, today, SUB_COLLECTION);
-    if(unsubscribeSalesRecords) {
-      unsubscribeSalesRecords();
-    }
+  const getDailySalesMaster = async () => {
+    const startDay = todaySale.value.today.substring(0, 8) + "01";
 
-    unsubscribeSalesRecords = onSnapshot(subCollection, (querySnapshot) => {
-      dailySales.value = querySnapshot.docs.map(doc => ({
+    const parts = startDay.split('-');
+    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+    dateObj.setDate(dateObj.getDate() - 1);
+
+    const docRef = collection(db, TABLE_NAME);
+    const q = query(
+      docRef,
+      where("today", "==", todaySale.value.today),
+    );
+
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      dailySales.value = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        staff_name: doc.data().staff_name ?? null,
+        ...doc.data()
       }));
-
-    })
-
-    // 合計金額
-    const total = dailySales.value.reduce((sum, { amount }) => {
-      return sum + Number(amount ?? 0);
-    }, 0);
-
-    const mediaMap = new Map();
-
-    dailySales.value.forEach(({ key, amount }) => {
-      const media = key ?? '不明';
-      const amt = Number(amount ?? 0);
-
-      if (!mediaMap.has(media)) {
-        mediaMap.set(media, {
-          media_amount: 0,      // 金額合計
-        });
-      }
-
-      const current = mediaMap.get(media);
-      current.media_amount += amt;
-
-      mediaMap.set(media, current); // 上書き
     });
 
-    const media = Array.from(mediaMap.entries()).map(([media_name, data]) => ({
-      media_name,
-      media_amount: data.media_amount,
-    }));
-
-    totalAmount.value = { total, media };
+    return unsubscribe;
   }
 
   // 媒体全取得
@@ -173,13 +134,25 @@ const wholeMapping = (v) => {
     if (num == null || num === '') return ''
     return '￥' + Number(num).toLocaleString() + '円'
   }
+  const openDialog = () => {
+    addMode.value = true
+    dialog.value = true
+    todaySale.value = {
+      today: todaySale.value.today,
+    }
+  }
+
+  const cloceDialog = () => {
+    addMode.value = true
+    dialog.value = false
+    todaySale.value = {
+      today: todaySale.value.today,
+    }
+  }
 </script>
 
 <template>
-  <AuthLayout>
-    <div class="w-1/2 mx-auto m-[-10px]">
-      <SmText type="date" bordernone v-model="today"></SmText>
-    </div>
+  <AuthLayout v-model="todaySale.today">
     <v-data-table :headers="headers" :items="dailySales" class="bg-transparent max-h-[300px]" fixed-header
       :items-per-page="-1" hide-default-footer>
 
@@ -211,11 +184,7 @@ const wholeMapping = (v) => {
         </tr>
       </template>
     </v-data-table>
-    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="() => {
-      addMode = true
-      todaySale = {};
-      dialog = true
-    }" />
+    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="openDialog" />
     <v-dialog v-model="dialog" max-width="80%">
       <v-card prepend-icon="mdi-account" title="業者支払い入力">
         <div class="w-full pb-5 px-2 mx-auto">
@@ -224,11 +193,7 @@ const wholeMapping = (v) => {
               <SmSelect label="業者" v-model="todaySale.key" :items="wholesalers" ></SmSelect>
               <SmText label="金額" v-model="todaySale.amount"></SmText>
             </div>
-            <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => {
-              addMode = true
-              dialog = false
-              todaySale = {};
-            }" />
+            <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="cloceDialog" />
             <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
             <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
           </form>
