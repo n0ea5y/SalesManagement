@@ -15,6 +15,10 @@
     await getStaffWlorkList();
   })
 
+  watch(() => props.parentDate, async (newVal) => {
+    await getStaffWlorkList();
+  })
+
   const staffWork = ref({});     // スタッフ入力変数
   const staffWorkList = ref([]); // スタッフ勤怠リスト変数
   const staffList = ref([])      // スタッフ変数

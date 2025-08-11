@@ -1,153 +1,150 @@
 <script setup>
+import { onMounted, ref, watch } from 'vue';
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import Loading from 'vue-loading-overlay'
-import { media, wholesalers, GAIHAN_ID, staffid, staffcell } from '@/views/Tools/constants'
-
-import { collection, getDocs, getDoc, doc, query, where } from 'firebase/firestore'
+import { MEDIA_ID, wholesalers, GAIHAN_ID, staffid, staffcell, paymentMethodsCell } from '@/views/Tools/constants'
+import { collection, getDocs, getDoc, doc, query, where, orderBy } from 'firebase/firestore'
 import { db } from '@/assets/firebase.init'
-import { ref } from 'vue'
+import { insertToast, updateToast, deleteToast } from '../views/Tools/Toast';
 
-const isLoading = ref(false)
-const staffList = ref([]);
-const staffWages = ref({});
-
-const getStaffList = async () => {
-  const colRef = collection(db, 'staff');
-  const snapshot = await getDocs(colRef);
-
-  staffList.value = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-
-  const wages = {};
-  staffList.value.forEach(staff => {
-    wages[staff.id] = staff.hourly_wage;
-  });
-  staffWages.value = wages;
-};
-
-getStaffList();
 
 const props = defineProps({
-  label: {
+  parentDate: {
     type: String,
-  },
-
-  color: {
-    type: String,
-  },
-  year: {
-    type: String,
-  },
-  month: {
-    type: String,
-  },
+  }
 })
+onMounted(() => {
+  if (!props.parentDate) return;
+  setStartDayAndLastDay();
+  })
 
-const execlDL = async () => {
-  isLoading.value = true
-  const [data, targetData, staffList, wholesalersData, daily_salary, dayWholesalersTotal, amount_cash, amount_card, amount_point] = await getSelectMonthDayData(props.year, props.month)
+  const startDay = ref('');
+  const lastDay = ref('');
+  const isLoading = ref(false);
+  const CATCHID = 'SiBHolMYOW9dzytgYzPW'
+
+  watch(() => props.parentDate, (newVal, oldVal) => {
+    // 初回 or 年月が変わったときだけ実行
+    if (!oldVal || newVal.slice(0, 7) !== oldVal.slice(0, 7)) {
+      setStartDayAndLastDay();
+    }
+  });
+
+  const setStartDayAndLastDay = () => {
+    const [year, month] = props.parentDate.split('-').map(Number);
+
+    // 月初日
+    startDay.value = `${year}-${String(month).padStart(2, '0')}-01`;
+
+    // 月末日（翌月0日を指定するとその月の末日になる）
+    const lastDateObj = new Date(year, month, 0);
+    lastDay.value = `${lastDateObj.getFullYear()}-${String(lastDateObj.getMonth() + 1).padStart(2, '0')}-${String(lastDateObj.getDate()).padStart(2, '0')}`;
+  };
+
+  const excelDL = async () => {
+    isLoading.value = true;
+    const result = await getSalesRecordsRealtime();
+    if (result.error) {
+      deleteToast(result.error);
+      return;
+    }
+    const inoutData = result.data;  // ← ここで配列を取り出す
+
+    // しはらいほうほ
+    const pytmentMethod = await getPaymentMethodRecord();
+
+    // うりあげもくひょう
+    const dailySalesTarget = await getDailySalesTarget();
+
+    const wholeSales = await getWholeSales();
+    const staffList = await getStaff();
+    const catchList = await getCache();
+
   const response = await fetch('/omiya_template.xlsx')
   const arrayBuffer = await response.arrayBuffer()
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(arrayBuffer)
   const sheet = workbook.worksheets[0]
-  // =============================================
 
-  // えくせるかきこみ:しーと１
-  data.forEach((element) => {
-    if (Object.keys(element.staffData).length !== 0) {
-      const num = element.day
-      Object.entries(element.staffData).forEach(([staffId, info]) => {
-        sheet.getCell(media[staffId] + (Number(num) + 2)).value = info.count
-        const cell1 = incrementExcelColumn(media[staffId])
-        sheet.getCell(cell1 + (Number(num) + 2)).value = info.guest_count
-        const cell2 = incrementExcelColumn(cell1)
-        sheet.getCell(cell2 + (Number(num) + 2)).value = info.amount
-      })
-    }
+  // ばいたいにゅうりょう
+  let num = 3;
+  inoutData.forEach((element) => {
+    element.staffData.forEach((v) => {
+      let cell = MEDIA_ID[v.id];
+      sheet.getCell(cell  + Number(num)).value = v.count
+      cell = incrementExcelColumn(cell);
+      sheet.getCell(cell  + Number(num)).value = v.guest_count
+      cell = incrementExcelColumn(cell);
+      sheet.getCell(cell  + Number(num)).value = v.amount
+    })
+    num++;
   })
 
-  ('test1')
-  // げんきん
-  Object.entries(amount_cash).forEach(([day, total]) => {
-    sheet.getCell('AF' + (Number(day) + 2)).value = total
-  });
-  ('test2')
-  // かーど
-  Object.entries(amount_card).forEach(([day, total]) => {
-    sheet.getCell('AG' + (Number(day) + 2)).value = total
-  });
+  // しはらいほうほう
+  num = 3;
+  pytmentMethod.forEach((element) => {
+    element.pymentMethod.forEach((v) => {
+      sheet.getCell('AF'  + Number(num)).value = v.cash
+      sheet.getCell('AG'  + Number(num)).value = v.card
+      sheet.getCell('AH' + Number(num)).value = v.point
+    })
+    num++;
+  })
 
-  ('test3')
-  // ぽいんと
-  (amount_point);
-  Object.entries(amount_point).forEach(([day, total]) => {
-    sheet.getCell('AH' + (Number(day) + 2)).value = total
-  });
-  ('test4')
+    // うりあげもくひょう
+  num = 3;
+  dailySalesTarget.forEach((element) => {
+      sheet.getCell('AC'  + Number(num)).value = element.target_sales
+    num++;
+  })
+
   // りょうしゅうしょ
-  Object.entries(dayWholesalersTotal).forEach(([day, total]) => {
-    sheet.getCell('AJ' + (Number(day) + 2)).value = total
-  });
+  num = 3;
+  wholeSales.byDate.forEach((element) => {
+      sheet.getCell('AJ'  + Number(num)).value = element.amount
+    num++;
+  })
+  
+  // きゃっちしーと
+  const sheet2 = workbook.worksheets[1]
+  num = 3;
+  catchList.data.forEach((element) => {
+    element.staffData.forEach((v) => {
+      let cell = staffid[v.id];
+      sheet2.getCell(cell  + Number(num)).value = v.count
+      cell = incrementExcelColumn(cell);
+      sheet2.getCell(cell  + Number(num)).value = v.guest_count
+      cell = incrementExcelColumn(cell);
+      sheet2.getCell(cell  + Number(num)).value = v.amount
+    })
+    num++;
+  })
 
+  const sheet3 = workbook.worksheets[2]
+  // おろしうりぎょうしゃ
+  num = 2;
+  wholeSales.byDateAndId.forEach((element) => {
+    element.staffData.forEach((v) => {
+      let cell = wholesalers[v.id];
+      sheet3.getCell(cell  + Number(num)).value = v.amount
+    })
+    num++;
+  })
 
-  ('test5')
-  // ひべつもくひょうにゅうりょく
-  // (targetData);
-  for (const [key, value] of Object.entries(targetData)) {
-    sheet.getCell('AC' + (Number(key) + 2)).value = value
-  }
+  
+  // すたっふきんたい
+  const sheet4 = workbook.worksheets[3]
+  num = 3;
+  staffList.data.forEach((element) => {
+    element.staffData.forEach((v) => {
+      let cell = staffcell[v.id];
+      sheet4.getCell(cell  + Number(num)).value = v.salary
+    })
+    num++;
+  })
 
-  ('test6')
-  // がいはんにゅうりょく
-  // (staffList);
-  const sheet1 = workbook.worksheets[1]
-  for (const [key, value] of Object.entries(staffList)) {
-    if (Object.keys(value).length === 0) continue;
-    for (const [innerKey, innerValue] of Object.entries(value)) {
-        sheet1.getCell(staffid[innerKey] + (Number(key) + 1)).value = innerValue.count;
-        const cell1 = incrementExcelColumn(staffid[innerKey])
-        sheet1.getCell(cell1 + (Number(key) + 1)).value = innerValue.data.guest_count;
-        const cell2 = incrementExcelColumn(cell1)
-        sheet1.getCell(cell2  + (Number(key) + 1)).value = innerValue.data.amount;
-    }
-  }
-
-  ('test7')
-  const sheet2 = workbook.worksheets[2]
-  // ぎょうしゃしはらいかきこみ
-for (const [key, value] of Object.entries(wholesalersData)) {
-  // 空オブジェクトをスキップ
-  if (Object.keys(value).length === 0) continue;
-
-
-  for (const [innerKey, innerValue] of Object.entries(value)) {
-    sheet2.getCell(wholesalers[innerKey] + (Number(key) + 1)).value = innerValue
-  }
-}
-
-  ('test8')
-// きゅうりょう（ばいと）
-  const sheet3 = workbook.worksheets[3];
-  // (daily_salary);
-if (Object.keys(daily_salary).length !== 0) {
-  Object.entries(daily_salary).forEach(([key, value]) => {
-    if (value.length !== 0) {
-      value.forEach(element => {
-        const hourlyWage = Number(staffWages.value[element.name]);
-        const before22 = Number(element.before22 ?? 0) * hourlyWage;
-        const after22  = Number(element.after22 ?? 0) * hourlyWage * 1.25;
-        const total = before22 + after22;
-        sheet3.getCell(staffcell[element.name] + (Number(key) + 1)).value = total;
-      });
-    }
-  });
-}
-  // =============================================
-
+  
   // 4. バッファへ書き出し
   const buffer = await workbook.xlsx.writeBuffer()
 
@@ -155,224 +152,439 @@ if (Object.keys(daily_salary).length !== 0) {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
-  saveAs(blob, `${props.year}_${props.month}_酔っ来い所_大宮.xlsx`)
-  isLoading.value = false
-}
+  saveAs(blob, `酔っ来い所_大宮.xlsx`)
+  isLoading.value = false;
 
-// でーたをまとめる
-const getSelectMonthDayData = async (year, month) => {
-const daysInMonth = new Date(year, month, 0).getDate();
-const days = [...Array(daysInMonth)].map((_, i) => String(i + 1).padStart(2, '0'));
-
-  const targetDay = await getDailyTarget(days, year, month)
-  const [mediaData, amount_cash, amount_card, amount_point] = await getTest(days, year, month)
-  const staffList = await getStaff(days, year, month);
-  const [wholesalersData, dayWholesalersTotal] = await getWholesalers(days, year, month)
-  const daily_salary  = await getAllRecords(days, year, month)
-  return [mediaData, targetDay, staffList, wholesalersData, daily_salary, dayWholesalersTotal, amount_cash, amount_card, amount_point]
-}
-
-const getAllRecords = async (dates, year, month) => {
-  const allData = {};
-
-  const promises = dates.map(async (dateStr) => {
-    const colRef = collection(db, 'staff_hourly_wage', year + '-' + month + '-' + dateStr, 'records');
-    const snapshot = await getDocs(colRef);
-
-    allData[dateStr] = [];
-
-    snapshot.forEach((doc) => {
-      allData[dateStr].push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-  });
-
-  await Promise.all(promises);
-
-  return allData;
-};
-
-// きゃっちよう
-const getStaff = async (days, year, month) => {
-  const specificStaffId = 'SiBHolMYOW9dzytgYzPW'
-  const specificStaffData = {}
-
-  const promises = days.map(async (day) => {
-    const colRef = collection(db, 'daily_sales', year, month, String(day), 'records')
-    const snapshot = await getDocs(colRef)
-    return { day, snapshot }
-  })
-
-  const seleList = await Promise.all(promises)
-
-  seleList.forEach(({ day, snapshot }) => {
-    const dayStr = String(day)
-    if (!specificStaffData[dayStr]) {
-      specificStaffData[dayStr] = {}
-    }
-
-    snapshot.forEach((doc) => {
-      const data = doc.data()
-      const key = data.staff_in_charge
-      const sid = data.staff_id
-
-      if (key === specificStaffId) {
-        if (!specificStaffData[dayStr][sid]) {
-          specificStaffData[dayStr][sid] = {
-            data: {
-              amount: 0,
-              guest_count: 0,
-              food_count: 0,
-              // 必要に応じて他のフィールドも初期化
-            },
-            count: 0,
-          }
-        }
-        specificStaffData[dayStr][sid].data.amount += Number(data.amount)
-        specificStaffData[dayStr][sid].data.guest_count += Number(data.guest_count)
-        specificStaffData[dayStr][sid].data.food_count += Number(data.food_count)
-        specificStaffData[dayStr][sid].count++
-      }
-    })
-  })
-
-  return specificStaffData
-}
-
-// 業者支払い
-const getWholesalers = async (days, year, month) => {
-  const whole_sales = {}
-  const day_total = {}
-
-  const promises = days.map(async (day) => {
-    const docRef = doc(db, 'total_wholesaler_sales', `${year}_${month}`, 'days', String(day))
-    const snapshot = await getDoc(docRef)
-    return { day, snapshot }
-  })
-
-  const seleList = await Promise.all(promises)
-
-  if (seleList && seleList.length > 0) {
-    seleList.forEach(({ day, snapshot }) => {
-      const dayStr = String(day)
-
-      if (!whole_sales[dayStr]) {
-        whole_sales[dayStr] = {}
-      }
-
-      let total = 0 // 合計金額の初期化
-
-      if (snapshot.exists()) {
-        const data = snapshot.data()
-        if (Array.isArray(data.media)) {
-          data.media.forEach((element) => {
-            const mediaName = element.media_name
-            const amount = Number(element.media_amount) || 0
-
-            whole_sales[dayStr][mediaName] = amount
-            total += amount
-          })
-        }
-      }
-
-      day_total[dayStr] = total
-    })
   }
 
-  return  [whole_sales, day_total]
-}
+  // すたっふしーとにゅうりょく
+const getStaff = async () => {
+    const q = query(collection(db, "staff_hourly_wage"),
+      where("today", ">=", startDay.value),
+      where("today", "<=", lastDay.value),
+      orderBy("today", "asc")
+    );
 
+  try {
+    const querySnapshot = await getDocs(q);
 
-// 日別目標
-const getDailyTarget = async (days, year, month) => {
-  const test = {}
-  // Promise 配列の作成
-  const promises = days.map(async (day) => {
-    // ドキュメント参照に変更
-    const docRef = doc(db, 'daily_sales_target', year, month, String(day)) // doc でドキュメント参照
-    const snapshot = await getDoc(docRef) // ドキュメント取得
-    return { day, snapshot }
-  })
+    const map = {};
 
-  // Promise を全て解決する
-  const seleList = await Promise.all(promises)
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      const amountStr = data.salary;
 
-  seleList.forEach(({ day, snapshot }) => {
-    const dayStr = String(day)
-    // snapshot が存在する場合のみ処理
-    if (snapshot.exists()) {
-      test[day] = snapshot.data().day_sales
-    }
-  })
+      const date = data.today;
+      const id = data.staff_id;
+      const key = `${date}_${id}`;
 
-  return test
-}
-
-// 日別売上
-const getTest = async (days, year, month) => {
-  const media_agencies = {}
-  const amount_cash = {}
-  const amount_card = {}
-  const amount_point = {}
-
-  const promises = days.map(async (day) => {
-    const colRef = collection(db, 'daily_sales', year, month, String(day), 'records')
-    const snapshot = await getDocs(colRef)
-    return { day, snapshot }
-  })
-
-  const seleList = await Promise.all(promises)
-
-  seleList.forEach(({ day, snapshot }) => {
-    const dayStr = String(day)
-
-    if (!media_agencies[dayStr]) {
-      media_agencies[dayStr] = {}
-    }
-    if (!amount_cash[dayStr]) amount_cash[dayStr] = 0
-    if (!amount_card[dayStr]) amount_card[dayStr] = 0
-    if (!amount_point[dayStr]) amount_point[dayStr] = 0
-
-    snapshot.forEach((doc) => {
-      const data = doc.data()
-      (data);
-      const key = data.staff_in_charge
-
-
-      if(data.pyment_method == 'cash'){
-        amount_cash[dayStr] += Number(data.amount);
-      }else if(data.pyment_method == 'card'){
-        amount_card[dayStr] += Number(data.amount);
-      }else if(data.pyment_method == 'point'){
-        amount_cash[dayStr] += Number(data.amount);
-        amount_point[dayStr] += Number(data.point);
+      if (!map[key]) {
+        map[key] = {
+          id,
+          today: date,
+          salary: 0
+        };
       }
 
-      if (!media_agencies[dayStr][key]) {
-        media_agencies[dayStr][key] = {
-          amount: data.point ? Number(data.amount) + Number(data.point) : Number(data.amount) ,
-          guest_count: Number(data.guest_count),
-          count: 1,
-        }
-      } else {
-        media_agencies[dayStr][key].amount += data.point ? Number(data.amount) + Number(data.point) : Number(data.amount)
-        media_agencies[dayStr][key].guest_count += Number(data.guest_count)
-        media_agencies[dayStr][key].count++
+      map[key].salary += parseInt(amountStr) || 0;
+    }
+
+    const resultArray = Object.values(map);
+
+    // 日付配列作成
+    const [yearStr, monthStr] = startDay.value.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const fullDates = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = String(day).padStart(2, '0');
+      fullDates.push(`${yearStr}-${monthStr}-${d}`);
+    }
+
+    const dailyDataMap = {};
+    fullDates.forEach(date => {
+      dailyDataMap[date] = [];
+    });
+
+    resultArray.forEach(item => {
+      if (!dailyDataMap[item.today]) {
+        dailyDataMap[item.today] = [];
       }
-    })
-  })
+      dailyDataMap[item.today].push(item);
+    });
 
-  const mediaList = Object.entries(media_agencies).map(([day, staffData]) => ({
-    day,
-    staffData,
-  }))
+    const finalArray = fullDates.map(date => ({
+      date,
+      staffData: dailyDataMap[date] || []
+    }));
 
-  // (mediaList);
+    return { data: finalArray };
 
-  return [mediaList, amount_cash, amount_card, amount_point]
-}
+  } catch (error) {
+    deleteToast(error);
+    return { error: error.message || 'Firestoreデータ取得エラー' };
+  }
+};
+
+const getDailySalesTarget = async () => {
+  const q = query(
+    collection(db, "daily_sales_target"),
+    where("today", ">=", startDay.value),
+    where("today", "<=", lastDay.value),
+    orderBy("today", "asc")
+  );
+
+  try {
+    const querySnapshot = await getDocs(q);
+
+    // Firestoreデータをオブジェクトに変換（検索しやすくする）
+    const salesMap = {};
+    querySnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      salesMap[data.today] = data.target_sales;
+    });
+
+    // 指定期間の全日付を作成
+    const result = [];
+    let current = new Date(startDay.value);
+    const end = new Date(lastDay.value);
+
+    while (current <= end) {
+      const y = current.getFullYear();
+      const m = String(current.getMonth() + 1).padStart(2, "0");
+      const d = String(current.getDate()).padStart(2, "0");
+      const dateStr = `${y}-${m}-${d}`;
+
+      result.push({
+        today: dateStr,
+        target_sales: salesMap[dateStr] || ""
+      });
+
+      current.setDate(current.getDate() + 1); // 次の日へ
+    }
+
+    return result;
+
+  } catch (error) {
+    deleteToast(error);
+    return { error: error.message || 'Firestoreデータ取得エラー' };
+  }
+};
+
+  // おろしうりぎょうしゃにゅうりょく
+const getWholeSales = async () => {
+  const q = query(
+    collection(db, "whole_sales"),
+    where("today", ">=", startDay.value),
+    where("today", "<=", lastDay.value),
+    orderBy("today", "asc")
+  );
+
+  try {
+    const querySnapshot = await getDocs(q);
+
+    const dateMap = {};    // 日付だけで集計
+    const dateIdMap = {};  // 日付＋IDで集計
+
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      const date = data.today;
+      const id = data.key;
+      const amount = parseInt(data.amount) || 0;
+
+      // 日付別
+      if (!dateMap[date]) {
+        dateMap[date] = { today: date, amount: 0 };
+      }
+      dateMap[date].amount += amount;
+
+      // 日付＋ID別
+      const compositeKey = `${date}_${id}`;
+      if (!dateIdMap[compositeKey]) {
+        dateIdMap[compositeKey] = { today: date, id, amount: 0 };
+      }
+      dateIdMap[compositeKey].amount += amount;
+    }
+
+    // 日付配列作成
+    const [yearStr, monthStr] = startDay.value.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const fullDates = Array.from({ length: daysInMonth }, (_, i) =>
+      `${yearStr}-${monthStr}-${String(i + 1).padStart(2, '0')}`
+    );
+
+    // byDate配列
+    const byDate = fullDates.map(date => ({
+      date,
+      amount: dateMap[date]?.amount || 0
+    }));
+
+    // byDateAndId配列
+    const dailyDataMap = {};
+    fullDates.forEach(date => {
+      dailyDataMap[date] = [];
+    });
+    Object.values(dateIdMap).forEach(item => {
+      dailyDataMap[item.today].push(item);
+    });
+
+    const byDateAndId = fullDates.map(date => ({
+      date,
+      staffData: dailyDataMap[date]
+    }));
+
+    return {
+      byDate,
+      byDateAndId
+    };
+
+  } catch (error) {
+    deleteToast(error);
+    return { error: error.message || 'Firestoreデータ取得エラー' };
+  }
+};
+
+// ばいたい
+const getSalesRecordsRealtime = async () => {
+  const q = query(
+    collection(db, "daily_sales"),
+    where("today", ">=", startDay.value),
+    where("today", "<=", lastDay.value),
+    orderBy("today", "asc")
+  );
+
+  try {
+    const querySnapshot = await getDocs(q);
+
+    const map = {};
+
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      const amountStr = data.amount;
+
+      // amountが存在しない or 数値に変換できない場合は早期リターンでエラー通知
+      if (amountStr === undefined || amountStr === null || amountStr === '' || isNaN(Number(amountStr))) {
+        return { error: 'インアウト表で金額が入っていない日があります' };
+      }
+
+      const date = data.today;
+      const id = data.staff_in_charge;
+      const key = `${date}_${id}`;
+
+      if (!map[key]) {
+        map[key] = {
+          id,
+          today: date,
+          count: 0,
+          guest_count: 0,
+          amount: 0
+        };
+      }
+
+      map[key].guest_count += data.guest_count || 0;
+      map[key].amount += parseInt(amountStr) || 0;
+      map[key].count++;
+    }
+
+    const resultArray = Object.values(map);
+
+    // 日付配列作成
+    const [yearStr, monthStr] = startDay.value.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const fullDates = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = String(day).padStart(2, '0');
+      fullDates.push(`${yearStr}-${monthStr}-${d}`);
+    }
+
+    const dailyDataMap = {};
+    fullDates.forEach(date => {
+      dailyDataMap[date] = [];
+    });
+
+    resultArray.forEach(item => {
+      if (!dailyDataMap[item.today]) {
+        dailyDataMap[item.today] = [];
+      }
+      dailyDataMap[item.today].push(item);
+    });
+
+    const finalArray = fullDates.map(date => ({
+      date,
+      staffData: dailyDataMap[date] || []
+    }));
+
+    return { data: finalArray };
+
+  } catch (error) {
+    deleteToast(error);
+    return { error: error.message || 'Firestoreデータ取得エラー' };
+  }
+};
+
+// しはらいほうほう
+const getPaymentMethodRecord = async () => {
+  const q = query(
+    collection(db, "daily_sales"),
+    where("today", ">=", startDay.value),
+    where("today", "<=", lastDay.value),
+    orderBy("today", "asc")
+  );
+
+  try {
+    const querySnapshot = await getDocs(q);
+
+    const dateMap = {}; // { date: { cash, card, point } }
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const date = data.today;
+      const paymentMethod = data.pyment_method || 'unknown';
+
+      if (!dateMap[date]) {
+        dateMap[date] = {
+          cash: 0,
+          card: 0,
+          point: 0,
+        };
+      }
+
+      const amount = parseInt(data.amount) || 0;
+      const point = parseInt(data.point) || 0;
+
+      switch(paymentMethod) {
+        case 'cash':
+          dateMap[date].cash += amount;
+          break;
+        case 'card':
+          dateMap[date].card += amount;
+          break;
+        case 'point':
+          dateMap[date].point += point;  // ポイント数だけ加算
+          dateMap[date].cash += amount;  // amountは残額としてcashに加算（必要なければ調整可）
+          break;
+        default:
+          dateMap[date].cash += amount;
+          break;
+      }
+    });
+
+    const [yearStr, monthStr] = startDay.value.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const fullDates = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      fullDates.push(`${yearStr}-${monthStr}-${String(day).padStart(2, '0')}`);
+    }
+
+    const finalArray = fullDates.map(date => {
+      const data = dateMap[date] || { cash: 0, card: 0, point: 0 };
+      return {
+        date,
+        pymentMethod: [
+          {
+            pymentMethod: 'all',
+            today: date,
+            cash: data.cash,
+            card: data.card,
+            point: data.point,
+          }
+        ]
+      };
+    });
+
+    return finalArray;
+
+  } catch (error) {
+    return [];
+  }
+};
+
+// きゃっちしーとにゅうりょく
+const getCache = async () => {
+    const q = query(collection(db, "daily_sales"),
+      where("staff_in_charge", "==", CATCHID),
+      where("today", ">=", startDay.value),
+      where("today", "<=", lastDay.value),
+      orderBy("today", "asc")
+    );
+
+  try {
+    const querySnapshot = await getDocs(q);
+
+    const map = {};
+
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      const amountStr = data.amount;
+
+      const date = data.today;
+      const id = data.staff_id;
+      const key = `${date}_${id}`;
+
+      if (!map[key]) {
+        map[key] = {
+          id,
+          today: date,
+          count: 0,
+          guest_count: 0,
+          amount: 0
+        };
+      }
+
+      map[key].guest_count += data.guest_count || 0;
+      map[key].amount += parseInt(amountStr) || 0;
+      map[key].count++;
+    }
+
+    const resultArray = Object.values(map);
+
+    // 日付配列作成
+    const [yearStr, monthStr] = startDay.value.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const fullDates = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = String(day).padStart(2, '0');
+      fullDates.push(`${yearStr}-${monthStr}-${d}`);
+    }
+
+    const dailyDataMap = {};
+    fullDates.forEach(date => {
+      dailyDataMap[date] = [];
+    });
+
+    resultArray.forEach(item => {
+      if (!dailyDataMap[item.today]) {
+        dailyDataMap[item.today] = [];
+      }
+      dailyDataMap[item.today].push(item);
+    });
+
+    const finalArray = fullDates.map(date => ({
+      date,
+      staffData: dailyDataMap[date] || []
+    }));
+
+    return { data: finalArray };
+
+  } catch (error) {
+    deleteToast(error);
+    return { error: error.message || 'Firestoreデータ取得エラー' };
+  }
+};
 
 // いんくりめとかんすう
 function incrementExcelColumn(col) {
@@ -398,7 +610,13 @@ function incrementExcelColumn(col) {
 </script>
 
 <template>
-  <v-btn color="green" @click="execlDL">{{ label }}</v-btn>
+  <v-btn color="green" @click="excelDL">excel DL</v-btn>
+  <!-- <v-btn color="green" @click="execlDL">execl DL</v-btn> -->
+  <pre>
+    {{ startDay }}
+    {{ lastDay }}
+
+  </pre>
   <div
     v-if="isLoading"
     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-xl shadow-md bg-gray-500 bg-opacity-90 flex justify-center items-center z-50"

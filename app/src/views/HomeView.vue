@@ -92,6 +92,8 @@
     <v-text-field label="line botで送信する文言設定して" v-model="text"></v-text-field>
     <v-btn @click="test">SEND</v-btn>
   </div> -->
+
+
     <v-card class="w-[98%] px-4 py-2 mx-auto mb-2">
       <div class="flex justify-between items-center">
           <p>日別売上目標<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? '：' + formatNumber(dailySale[0]?.target_sales) : '：設定されていません' }}</span></p>
@@ -119,4 +121,9 @@
     <div class="mb-10">
       <MonthlyView v-bind:parent-date="parentDate"/>
     </div>
+
+  <div class="bg-red-100">
+    <v-btn color="red">Line 送信</v-btn>
+    <SmExcelBtn v-bind:parent-date="parentDate"></SmExcelBtn>
+  </div>
 </template>

@@ -26,8 +26,8 @@
       "autoClose": 1800,
     })
   }
-  export function deleteToast(){
-    toast('削除完了', {
+  export function deleteToast(text = '削除完了'){
+    toast(text, {
       "theme": "colored",
       "type": "error",
       "position": "top-center",

@@ -10,7 +10,7 @@ export const MEDIA_LIST = [
 ]
 
 // てんぷれーとよう
-  export const media = {
+  export const MEDIA_ID = {
 		'c4VML7BH7RWwhb48dajk': 'C', //ほっとぺっぱー
 		'YQjFVyBTxo42zc2a7LtA': 'O', //ふりー
 		'CmB51Dj7WUckwoggeyKv': 'R', //SNS
@@ -37,6 +37,11 @@ export const MEDIA_LIST = [
     {title: 'ポイント+現金', key: 'point'},
   ]
 
+  export const paymentMethodsCell = {
+    'cash': 'AF',
+    'card': 'AG',
+    'point': 'AH',
+  }
 
   // すたっふ（てんない）
   export const staffcell = {
@@ -58,7 +63,7 @@ export const MEDIA_LIST = [
   // がいはん
   export const staffid= {
     'VncUni6fFPSGlj8fqc6Y': 'F', //りひと
-    'ZoK1kS7ZkL2cFQ5CKtB2': 'F', //けんご
+    'ZoK1kS7ZkL2cFQ5CKtB2': 'I', //けんご
     'AU4nBZdULIrblgfBamk5': 'L', //みゆ
     'cnXSfZuX1PqNwJ5OrVE0': 'O', //はこ
     '08rSkH7y7LOTDyLmzVdE': 'R', //ひな
