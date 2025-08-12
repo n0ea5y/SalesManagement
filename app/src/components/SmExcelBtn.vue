@@ -3,10 +3,10 @@ import { onMounted, ref, watch } from 'vue';
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import Loading from 'vue-loading-overlay'
-import { MEDIA_ID, wholesalers, GAIHAN_ID, staffid, staffcell, paymentMethodsCell } from '@/views/Tools/constants'
-import { collection, getDocs, getDoc, doc, query, where, orderBy } from 'firebase/firestore'
+import { MEDIA_ID, wholesalers, staffid, staffcell } from '@/views/Tools/constants'
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '@/assets/firebase.init'
-import { insertToast, updateToast, deleteToast } from '../views/Tools/Toast';
+import { deleteToast } from '../views/Tools/Toast';
 
 
 const props = defineProps({
@@ -152,7 +152,8 @@ onMounted(() => {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
-  saveAs(blob, `酔っ来い所_大宮.xlsx`)
+  const [year, month, day] = props.parentDate.split('-');
+  saveAs(blob, `${year}_${month}_酔っ来い所_大宮.xlsx`)
   isLoading.value = false;
 
   }
@@ -610,13 +611,10 @@ function incrementExcelColumn(col) {
 </script>
 
 <template>
-  <v-btn color="green" @click="excelDL">excel DL</v-btn>
-  <!-- <v-btn color="green" @click="execlDL">execl DL</v-btn> -->
-  <pre>
-    {{ startDay }}
-    {{ lastDay }}
+  <v-btn 
+        style="background-color: #1A7F37; color: white;"
 
-  </pre>
+  @click="excelDL"><span class="mdi mdi-microsoft-excel text-lg"></span>excel DL</v-btn>
   <div
     v-if="isLoading"
     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-xl shadow-md bg-gray-500 bg-opacity-90 flex justify-center items-center z-50"
