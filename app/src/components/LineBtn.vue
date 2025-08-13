@@ -4,7 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { collection, getDocs, getDoc, doc, query, where, orderBy } from 'firebase/firestore'
 import { db } from '@/assets/firebase.init'
 import { insertToast, updateToast, deleteToast } from '../views/Tools/Toast';
-import { formatNumber } from '@/views/Tools/format';
+import { formatNumber, formatNumberNonYen } from '@/views/Tools/format';
 
     const props = defineProps({
     parentDate: {
@@ -139,12 +139,12 @@ import { formatNumber } from '@/views/Tools/format';
     const msg =
 `${msgTitle} \n
 ${day.value} \n
-売上目標 \n${formatNumber(targetSales)}\n
-売上実績 \n ${formatNumber(sales)}　${((sales / targetSales) * 100).toFixed(2)}％ \n
-今月累計売上目標\n ${formatNumber(targetSalesTotal)} \n
-今月累計売上\n ${formatNumber(salesTotal)}　${((salesTotal / targetSalesTotal) * 100).toFixed(2)}％\n
-当日アルバイト人件費\n ${formatNumber(salary)}　${((salary / sales) * 100).toFixed(2)}％\n
-アルバイト人件費累計\n ${formatNumber(salaryTotal)}　${((salaryTotal / targetSalesTotal) * 100).toFixed(2)}％\n
+売上目標 \n${formatNumberNonYen(targetSales)}\n
+売上実績 \n ${formatNumberNonYen(sales)}　${(Math.floor((sales / targetSales) * 100))}％ \n
+今月累計売上目標\n ${formatNumberNonYen(targetSalesTotal)} \n
+今月累計売上\n ${formatNumberNonYen(salesTotal)}　${Math.floor(((salesTotal / targetSalesTotal) * 100))}％\n
+当日アルバイト人件費\n ${formatNumberNonYen(salary)}　${Math.floor(((salary / sales) * 100))}％\n
+アルバイト人件費累計\n ${formatNumberNonYen(salaryTotal)}　${Math.floor(((salaryTotal / targetSalesTotal) * 100))}％\n
 `
   try {
     const res = await axios.post(

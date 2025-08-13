@@ -5,7 +5,7 @@
   import { userStatus } from '../stores/userStatus'
   import { TABLE_NUMBER, GAIHAN_ID, GET_NUMBER, paymentMethods } from './Tools/constants';
   import { db } from '@/assets/firebase.init';
-  import { addDoc, collection, getDocs, updateDoc, where, doc, onSnapshot, query, deleteDoc } from "firebase/firestore";
+  import { addDoc, collection, getDocs, updateDoc, where, doc, onSnapshot, query, deleteDoc, orderBy } from "firebase/firestore";
   import { onMounted, ref, watch } from 'vue';
   import { insertToast, updateToast, deleteToast } from './Tools/Toast';
 
@@ -86,6 +86,7 @@
     const q = query(
       docRef,
       where("today", "==", salesRecords.value.today),
+      orderBy("entry_time", "asc"),
     );
 
     // リアルタイム監視
@@ -132,7 +133,7 @@
   // 三桁区切り
   const formatWithCommas = (v) => {
     if(!v) return;
-    return '￥' + Number(v).toLocaleString() + '円';
+    return '￥' + Number(v).toLocaleString();
   }
 
   const pymentMethodMapping = (key) => {
@@ -155,7 +156,10 @@
 </script>
 
 <template>
-    <div class="flex overflow-x-auto">
+  <div class="flex justify-end items-center px-[5px] pb-[5px]">
+    <SmButton label="新規登録" class="" @click="openDialog" />
+  </div>
+    <div class="flex overflow-x-auto max-h-[480px] shadow-md">
       <v-data-table class="w-full min-w-[1100px]" fixed-header hide-default-footer :headers="headers" :items="salesRecordItems" :items-per-page="-1">
         <template v-slot:item="{item}">
         <tr :class="[!item.amount ? 'bg-red-200': '']">
@@ -192,7 +196,6 @@
       </template>
       </v-data-table>
     </div>
-    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="openDialog" />
     <v-dialog v-model="dialog">
       <form @submit.prevent="addMode ? submit() : update()">
         <v-card class="flex flex-col gap-5 py-4 px-2">

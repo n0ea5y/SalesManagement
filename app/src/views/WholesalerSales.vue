@@ -132,7 +132,7 @@ const wholeMapping = (v) => {
 }
   const formatNumber = (num) => {
     if (num == null || num === '') return ''
-    return '￥' + Number(num).toLocaleString() + '円'
+    return '￥' + Number(num).toLocaleString()
   }
   const openDialog = () => {
     addMode.value = true
@@ -152,10 +152,11 @@ const wholeMapping = (v) => {
 </script>
 
 <template>
-  <AuthLayout v-model="todaySale.today">
-    <v-data-table :headers="headers" :items="dailySales" class="bg-transparent max-h-[300px]" fixed-header
+  <div class="flex justify-end items-center px-[5px] pb-[5px]">
+    <SmButton label="新規登録" class="" @click="openDialog" />
+  </div>
+    <v-data-table :headers="headers" :items="dailySales" class="flex overflow-x-auto max-h-[480px] shadow-md" fixed-header
       :items-per-page="-1" hide-default-footer>
-
       <template v-slot:item="{ item }">
         <tr>
           <td>{{ wholeMapping(item.key) }}</td>
@@ -184,7 +185,6 @@ const wholeMapping = (v) => {
         </tr>
       </template>
     </v-data-table>
-    <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="openDialog" />
     <v-dialog v-model="dialog" max-width="80%">
       <v-card prepend-icon="mdi-account" title="業者支払い入力">
         <div class="w-full pb-5 px-2 mx-auto">
@@ -200,5 +200,4 @@ const wholeMapping = (v) => {
         </div>
       </v-card>
     </v-dialog>
-  </AuthLayout>
 </template>

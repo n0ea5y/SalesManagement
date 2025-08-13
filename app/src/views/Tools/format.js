@@ -6,5 +6,11 @@
   // 金額のフォーマット
   export function formatNumber(num) {
     if (num == null || num === '') return ''
-    return '￥' + Number(num).toLocaleString() + '円'
+    return '￥' + Number(num).toLocaleString()
+  }
+
+    // 金額のフォーマット
+  export function formatNumberNonYen(num) {
+    if (num == null || num === '') return ''
+    return '￥' + Number(num).toLocaleString()
   }

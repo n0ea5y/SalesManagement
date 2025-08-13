@@ -86,7 +86,7 @@
     if (!amount || !rateStr) return;
     const rate = Number(rateStr.replace('%', '')) / 100;
     const result = amount * rate;
-    return formatNumber(result);
+    return formatNumber(Math.floor(result));
   }
 
   const headers = [

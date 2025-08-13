@@ -70,13 +70,13 @@
       const a = parseFloat(after) || 0;
       const h = parseFloat(hourlyWage) || 0;
 
-      staffWork.value.salary = (b * h) + (a * h * 1.25);
+      staffWork.value.salary = Math.floor((b * h) + (a * h * 1.25));
     }
   );
 
   const formatNumber = (num) => {
     if (num == null || num === '') return ''
-    return '￥' + Number(num).toLocaleString() + '円'
+    return '￥' + Number(num).toLocaleString()
   }
 
   // 表のstaffIdとnameのマッピング
@@ -119,14 +119,14 @@
     });
   }
 
-  const dialogOpen = () => {
+  const openDialog = () => {
     dialog.value = true;
     staffWork.value = {
       today: props.parentDate,
     }
   }
 
-  const dialogClose = () => {
+  const closeDialog = () => {
     dialog.value = false;
     addMode.value =true;
     staffWork.value = {
@@ -163,7 +163,10 @@
 </script>
 
 <template>
-    <div class=" overflow-x-auto">
+  <div class="flex justify-end items-center px-[5px] pb-[5px]">
+    <SmButton label="新規登録" class="" @click="openDialog" />
+  </div>
+    <div class="flex overflow-x-auto max-h-[480px] shadow-md">
       <v-data-table 
         :headers="headers" 
         :items="staffWorkList"
@@ -200,7 +203,6 @@
       </template>
       </v-data-table>
     </div>
-      <SmButton label="新規登録" class="px-4 py-1 mt-5 mr-3 ml-2" @click="dialogOpen" />
       <v-dialog v-model="dialog" max-width="80%">
         <v-card prepend-icon="mdi-account" title="勤務時間入力">
           <div class="w-full pb-5 px-2 mx-auto">
@@ -210,7 +212,7 @@
                 <SmSelect label="通常勤務" v-model="staffWork.before22" :items="times"></SmSelect>
                 <SmSelect label="深夜勤務" v-model="staffWork.after22" :items="times"></SmSelect>
               </div>
-              <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="dialogClose" />
+              <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="closeDialog" />
               <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
               <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
             </form>

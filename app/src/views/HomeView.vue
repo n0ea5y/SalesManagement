@@ -117,7 +117,7 @@
       <MonthlyView v-bind:parent-date="parentDate"/>
     </div>
 
-  <div class="flex justify-around">
+  <div class="flex justify-around pb-5">
     <SmExcelBtn v-bind:parent-date="parentDate"></SmExcelBtn>
     <LineBtn v-bind:parent-date="parentDate"></LineBtn>
   </div>
