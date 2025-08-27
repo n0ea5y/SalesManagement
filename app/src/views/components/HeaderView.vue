@@ -121,32 +121,32 @@ const logout = () => {
       </div>
     </transition>
   </nav>
-<div class="flex justify-around text-xs space-x-2 py-1">
+<div class="flex justify-around text-xs space-x-2 pt-3">
   <router-link
     v-if="store.isLoggedIn"
     to="/inout"
-    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300 bg-white shadow-md"
   >
     インアウト表
   </router-link>
   <router-link
     v-if="store.isLoggedIn"
     to="/store-wholesaler-sales"
-    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300 bg-white shadow-md"
   >
     支払い関連
   </router-link>
   <router-link
     v-if="store.isLoggedIn"
     to="/staff-shift-input"
-    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300 bg-white shadow-md"
   >
     勤怠
   </router-link>
   <router-link
     v-if="store.isLoggedIn"
     to="/catch-staff-sales"
-    class="px-2 py-1 rounded text-gray-700 border border-gray-300"
+    class="px-2 py-1 rounded text-gray-700 border border-gray-300 bg-white shadow-md"
   >
     外販売上
   </router-link>

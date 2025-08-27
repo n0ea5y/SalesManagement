@@ -55,3 +55,9 @@ function decrementDate() {
     <component :is="Component" :parentDate="vModel" />
   </RouterView>
 </template>
+
+<style>
+body {
+  background-color: #f5f5f5;
+}
+</style>

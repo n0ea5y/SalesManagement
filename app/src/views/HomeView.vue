@@ -1,6 +1,7 @@
 <script setup>
   import DailyView from './components/DailyView.vue';
   import MonthlyView from './components/MonthlyView.vue';
+  import CacheDay from './components/CacheDay.vue';
   import SmText from '@/components/SmText.vue';
   import LineBtn from '@/components/LineBtn.vue';
   import { formatNumber } from './Tools/format';
@@ -89,36 +90,39 @@
 </script>
 
 <template>
-    <v-card class="w-[98%] px-4 py-2 mx-auto mb-2">
-      <div class="flex justify-between items-center">
-          <p>日別売上目標<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? '：' + formatNumber(dailySale[0]?.target_sales) : '：設定されていません' }}</span></p>
-          <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog"></SmButton>
+      <v-card class="w-[98%] px-4 py-2 mx-auto mb-5">
+        <div class="flex justify-between items-center">
+            <p>日別売上目標<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? '：' + formatNumber(dailySale[0]?.target_sales) : '：設定されていません' }}</span></p>
+            <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog"></SmButton>
 
+        </div>
+      </v-card>
+    <v-dialog v-model="dialog" max-width="80%">
+      <v-card prepend-icon="mdi-account" title="日別売上設定">
+        <div class="w-full pb-5 px-2 mx-auto">
+          <form @submit.prevent="addMode ? submit() : update()">
+            <SmText label="日別売上目標" v-model="dailySalesTarget.target_sales" required></SmText>
+            <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => { dialog = false }" />
+            <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
+            <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
+          </form>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <v-card class="w-[98%] mx-auto mb-5 py-2">
+      <div class="flex flex-col gap-4">
+        <DailyView v-bind:parent-date="parentDate"/>
+        <CacheDay v-bind:parent-date="parentDate"></CacheDay>
       </div>
     </v-card>
-  <v-dialog v-model="dialog" max-width="80%">
-    <v-card prepend-icon="mdi-account" title="日別売上設定">
-      <div class="w-full pb-5 px-2 mx-auto">
-        <form @submit.prevent="addMode ? submit() : update()">
-          <SmText label="日別売上目標" v-model="dailySalesTarget.target_sales" required></SmText>
-          <SmButton label="閉じる" htmlType="button" type="none" class="px-4 py-1 mt-5 mr-3" @click="() => { dialog = false }" />
-          <SmButton v-if="addMode" label="登録" class="px-4 py-1 mt-5" type="store" />
-          <SmButton v-else label="更新" class="px-4 py-1 mt-5" type="update" />
-        </form>
-      </div>
-    </v-card>
-  </v-dialog>
-
-  <div class="mb-10">
-    <DailyView v-bind:parent-date="parentDate"/>
-  </div>
-
+    
     <div class="mb-10">
       <MonthlyView v-bind:parent-date="parentDate"/>
     </div>
 
-  <div class="flex justify-around pb-5">
-    <SmExcelBtn v-bind:parent-date="parentDate"></SmExcelBtn>
-    <LineBtn v-bind:parent-date="parentDate"></LineBtn>
-  </div>
+    <div class="flex justify-around pb-5">
+      <SmExcelBtn v-bind:parent-date="parentDate"></SmExcelBtn>
+      <LineBtn v-bind:parent-date="parentDate"></LineBtn>
+    </div>
 </template>
