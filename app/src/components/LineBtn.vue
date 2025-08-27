@@ -145,6 +145,8 @@ ${day.value} \n
 今月累計売上\n ${formatNumberNonYen(salesTotal)}　${Math.floor(((salesTotal / targetSalesTotal) * 100))}％\n
 当日アルバイト人件費\n ${formatNumberNonYen(salary)}　${Math.floor(((salary / sales) * 100))}％\n
 アルバイト人件費累計\n ${formatNumberNonYen(salaryTotal)}　${Math.floor(((salaryTotal / targetSalesTotal) * 100))}％\n
+当日人件費社員込み \n
+総人件費累計 \n
 `
   try {
     const res = await axios.post(
