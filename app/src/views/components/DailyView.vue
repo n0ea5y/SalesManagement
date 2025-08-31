@@ -78,7 +78,7 @@
   const countCountMapping = (v) => {
     if(!v) return;
     const media = salesRecordItems.value.find(sale => {
-      return v === sale.count;
+      return v === sale.media_id;
     })
     return media ? media.count : '0';
   }
