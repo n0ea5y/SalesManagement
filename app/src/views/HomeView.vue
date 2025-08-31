@@ -112,8 +112,8 @@
 
     <v-card class="w-[98%] mx-auto mb-5 py-2">
       <div class="flex flex-col gap-4">
-        <DailyView v-bind:parent-date="parentDate"/>
         <CacheDay v-bind:parent-date="parentDate"></CacheDay>
+        <DailyView v-bind:parent-date="parentDate"/>
       </div>
     </v-card>
     

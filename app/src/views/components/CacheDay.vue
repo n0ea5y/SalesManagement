@@ -77,7 +77,7 @@
   <div class="overflow-x-auto">
     <v-card class="w-[98%] mx-auto mb-2" subtitle="外板別">
       <v-data-table :items="cacheDayItem" :items-per-page="-1" hide-default-header hide-default-footer
-        class="bg-transparent max-h-[400px] w-full">
+        class="bg-transparent max-h-[200px] w-full">
         <template v-slot:item="{ item }">
           <tr class="text-sm">
             <td class="w-[150px] text-[13px]">{{ staffMapping(item.media_id) }}</td>

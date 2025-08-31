@@ -74,25 +74,43 @@
       return {key: doc.id, title: doc.data().name}
     });
   }
-  const mediafMapping = (v) => {
-    if (!v) return;
-    const media = mediaAgencies.value.find((item) => item.key === v);
-    return media ? media.title : '';
+
+  const countCountMapping = (v) => {
+    if(!v) return;
+    const media = salesRecordItems.value.find(sale => {
+      return v === sale.count;
+    })
+    return media ? media.count : '0';
+  }
+
+  const amountCountMapping = (v) => {
+    if(!v) return;
+    const media = salesRecordItems.value.find(sale => {
+      return v === sale.media_id;
+    })
+    return media ? media.amount : '0';
+  }
+
+  const guestCountMapping = (v) => {
+    if(!v) return;
+    const media = salesRecordItems.value.find(sale => {
+      return v === sale.media_id;
+    })
+    return media ? media.guest_count : '0';
   }
 </script>
 
 <template>
-  <p></p>
   <div class="overflow-x-auto">
     <v-card class="w-[98%] mx-auto mb-2" subtitle="日別売上">
-      <v-data-table :items="salesRecordItems" :items-per-page="-1" hide-default-header hide-default-footer
+      <v-data-table :items="mediaAgencies" :items-per-page="-1" hide-default-header hide-default-footer
         class="bg-transparent max-h-[400px] w-full">
         <template v-slot:item="{ item }">
           <tr class="text-sm">
-            <td class="w-[160px] text-[13px]">{{ mediafMapping(item.media_id) }}</td>
-            <td class="w-[70px] text-[12px]">{{ item.guest_count }}人</td>
-            <td class="w-[70px] text-[12px]">{{ item.count }}組</td>
-            <td class="w-[130px] text-[13px]">{{ formatNumber(item.amount) }}</td>
+            <td class="w-1/4 text-[13px]">{{ item.title }}</td>
+            <td class="w-1/4 text-end text-[13px]">{{ guestCountMapping(item.key)}}人</td>
+            <td class="w-1/4 text-end text-[13px]">{{ countCountMapping(item.key)}}組</td>
+            <td class="w-1/4 text-end text-[13px]">{{ formatNumber(amountCountMapping(item.key))}}</td>
           </tr>
         </template>
       </v-data-table>
@@ -100,11 +118,11 @@
       <v-data-table :items="total" :items-per-page="-1" hide-default-header hide-default-footer
         class="bg-transparent max-h-[300px] w-full">
         <template v-slot:item="{ item }">
-          <tr class="text-sm">
-            <td class="w-[160px] text-[13px] font-bold">合計</td>
-            <td class="w-[70px] text-[13px] font-bold">{{ item.guest_count }}人</td>
-            <td class="w-[70px] text-[13px] font-bold">{{ item.count }}組</td>
-            <td class="w-[130px] text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
+          <tr class="text-sm border-t">
+            <td class="w-1/4 text-[13px] font-bold">合計</td>
+            <td class="w-1/4 text-end text-[13px] font-bold">{{ item.guest_count }}人</td>
+            <td class="w-1/4 text-end text-[13px] font-bold">{{ item.count }}組</td>
+            <td class="w-1/4 text-end text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
           </tr>
         </template>
       </v-data-table>
