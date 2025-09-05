@@ -5,6 +5,8 @@
   import SmText from '@/components/SmText.vue';
   import LineBtn from '@/components/LineBtn.vue';
   import EmployeeView from './components/EmployeeView.vue';
+  import DailyWhole from './components/DailyWhole.vue';
+  import DailySalary from './components/DailySalary.vue';
   import { formatNumber } from './Tools/format';
   import { computed, onMounted, ref, watch } from 'vue';
   import { db } from '@/assets/firebase.init';
@@ -119,6 +121,8 @@
       <div class="flex flex-col gap-4">
         <CacheDay v-bind:parent-date="parentDate"></CacheDay>
         <DailyView v-bind:parent-date="parentDate"/>
+        <DailyWhole v-bind:parent-date="parentDate"></DailyWhole>
+        <DailySalary v-bind:parent-date="parentDate"></DailySalary>
       </div>
     </v-card>
     

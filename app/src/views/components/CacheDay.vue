@@ -80,10 +80,10 @@
         class="bg-transparent max-h-[200px] w-full">
         <template v-slot:item="{ item }">
           <tr class="text-sm">
-            <td class="w-[150px] text-[13px]">{{ staffMapping(item.media_id) }}</td>
-            <td class="w-[70px] text-[12px]">{{ item.guest_count }}人</td>
-            <td class="w-[70px] text-[12px]">{{ item.count }}組</td>
-            <td class="w-[130px] text-[13px]">{{ formatNumber(item.amount) }}</td>
+            <td class="w-1/4 text-[13px]">{{ staffMapping(item.media_id) }}</td>
+            <td class="w-1/4 text-center text-[12px]">{{ item.guest_count }}人</td>
+            <td class="w-1/4 text-center text-[12px]">{{ item.count }}組</td>
+            <td class="w-1/4 text-end text-[13px]">{{ formatNumber(item.amount) }}</td>
           </tr>
         </template>
       </v-data-table>

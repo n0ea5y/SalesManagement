@@ -108,8 +108,8 @@
         <template v-slot:item="{ item }">
           <tr class="text-sm">
             <td class="w-1/4 text-[13px]">{{ item.title }}</td>
-            <td class="w-1/4 text-end text-[13px]">{{ guestCountMapping(item.key)}}人</td>
-            <td class="w-1/4 text-end text-[13px]">{{ countCountMapping(item.key)}}組</td>
+            <td class="w-1/4 text-center text-[13px]">{{ guestCountMapping(item.key)}}人</td>
+            <td class="w-1/4 text-center text-[13px]">{{ countCountMapping(item.key)}}組</td>
             <td class="w-1/4 text-end text-[13px]">{{ formatNumber(amountCountMapping(item.key))}}</td>
           </tr>
         </template>
@@ -120,8 +120,8 @@
         <template v-slot:item="{ item }">
           <tr class="text-sm border-t">
             <td class="w-1/4 text-[13px] font-bold">合計</td>
-            <td class="w-1/4 text-end text-[13px] font-bold">{{ item.guest_count }}人</td>
-            <td class="w-1/4 text-end text-[13px] font-bold">{{ item.count }}組</td>
+            <td class="w-1/4 text-center text-[13px] font-bold">{{ item.guest_count }}人</td>
+            <td class="w-1/4 text-center text-[13px] font-bold">{{ item.count }}組</td>
             <td class="w-1/4 text-end text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
           </tr>
         </template>
