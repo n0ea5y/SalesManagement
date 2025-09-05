@@ -4,6 +4,7 @@
   import CacheDay from './components/CacheDay.vue';
   import SmText from '@/components/SmText.vue';
   import LineBtn from '@/components/LineBtn.vue';
+  import EmployeeView from './components/EmployeeView.vue';
   import { formatNumber } from './Tools/format';
   import { computed, onMounted, ref, watch } from 'vue';
   import { db } from '@/assets/firebase.init';
@@ -91,12 +92,16 @@
 
 <template>
       <v-card class="w-[98%] px-4 py-2 mx-auto mb-5">
-        <div class="flex justify-between items-center">
-            <p>日別売上目標<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? '：' + formatNumber(dailySale[0]?.target_sales) : '：設定されていません' }}</span></p>
-            <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog"></SmButton>
+        <EmployeeView v-bind:parent-date="parentDate"></EmployeeView>
+      </v-card>
 
+      <v-card class="w-[98%] px-4 py-2 mx-auto mb-5">
+        <div class="flex justify-between items-center">
+            <p>日別売上目標：<span :class="dailySale[0]?.target_sales ? '' : 'text-red-500'">{{ dailySale[0]?.target_sales ? formatNumber(dailySale[0]?.target_sales) : '未入力' }}</span></p>
+            <SmButton :type="addMode ? 'store' : 'update'" :label="addMode ? '登録' : '更新'" @click="() => dialog = !dialog"></SmButton>
         </div>
       </v-card>
+
     <v-dialog v-model="dialog" max-width="80%">
       <v-card prepend-icon="mdi-account" title="日別売上設定">
         <div class="w-full pb-5 px-2 mx-auto">

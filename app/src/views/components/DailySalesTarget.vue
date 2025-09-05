@@ -67,7 +67,7 @@ const formatNumber = (num) => {
 
 <template>
     <div class="flex items-center">
-        <p class="mr-auto">売上目標：{{ dailyTarget ? formatNumber(dailyTargetView) : '登録されていません' }}</p>
+        <p class="mr-auto">売上目標：{{ dailyTarget ? formatNumber(dailyTargetView) : '未入力' }}</p>
         <SmButton :label="dailyTargetLabel" class="px-4 py-1" @click="() => dialog = !dialog"></SmButton>
     </div>
 
