@@ -186,7 +186,6 @@ import { formatNumberNonYen } from '@/views/Tools/format';
 
         const employeeNum = await getEmployee(); //当日
         const employeeMonthNum = await getMonthEmployee(); //今月
-        console.log(employeeMonthNum);
 
         if (errorMessage.value && Object.keys(errorMessage.value).length > 0) {
             const date = Object.keys(errorMessage.value)[0]; // キーを取得

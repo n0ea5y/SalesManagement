@@ -25,7 +25,6 @@
 
         const querySnapshot = await getDocs(q);
         catchList.value = querySnapshot.docs.map((doc) => {
-            // console.log(doc.data())
             return {'id': doc.id, 'name': doc.data().name, 'rate': doc.data().commissionRate }
         });
     }
@@ -55,7 +54,6 @@
             const data = doc.data();
             const staffId = data.staff_id;
 
-            // console.log(data)
             total.value += Number(data.amount) || 0;
 
             if (!salaryMap[staffId]) {
