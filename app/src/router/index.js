@@ -85,6 +85,14 @@ const router = createRouter({
       // },
       component: () => import('../views/CatchStaffSales.vue')
     },
+    {
+      path: '/month-data',
+      name: 'manthDate',
+      // meta:{
+      //   isPublic: true,
+      // },
+      component: () => import('../views/MonthData.vue')
+    },
 
   ],
 })

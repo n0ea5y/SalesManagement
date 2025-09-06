@@ -3,26 +3,22 @@
   import { db } from '@/assets/firebase.init';
   import { collection, getDocs, where, onSnapshot, query } from "firebase/firestore";
   import { formatNumber } from '../Tools/format';
-
-  const props = defineProps({
-    parentDate: {
-      type: String,
-      required: true
-    }
-  })
+  import { inject } from 'vue';
 
   onMounted( async () => {
     await getSalesRecordsRealtime()
     await getMediaAgencies();
   })
 
+  const grobalItem = inject('grobalItem');
+  const today = grobalItem.today;
   const salesRecordItems = ref([]);
   const mediaAgencies = ref([]);
   const total = ref([]);
 
   // 登録データ一覧取得
   const getSalesRecordsRealtime = async () => {
-    const startDay = props.parentDate.substring(0, 8) + "01";
+    const startDay = today.substring(0, 8) + "01";
     const parts = startDay.split('-');
     const dateObj = new Date(parts[0], parts[1], parts[2]); //翌月の日付を取得
     dateObj.setDate(dateObj.getDate() - 1); // 1日前
@@ -109,21 +105,17 @@
         <template v-slot:item="{ item }">
           <tr class="text-sm">
             <td class="w-1/4 text-[13px]">{{ item.title }}</td>
-            <td class="w-1/4 text-center text-[13px]">{{ guestCountMapping(item.key)}}人</td>
-            <td class="w-1/4 text-center text-[13px]">{{ countCountMapping(item.key)}}組</td>
+            <td class="w-1/4 text-end text-[13px]">{{ guestCountMapping(item.key)}}人</td>
+            <td class="w-1/4 text-end text-[13px]">{{ countCountMapping(item.key)}}組</td>
             <td class="w-1/4 text-end text-[13px]">{{ formatNumber(amountCountMapping(item.key))}}</td>
           </tr>
         </template>
-      </v-data-table>
-
-      <v-data-table :items="total" :items-per-page="-1" hide-default-header hide-default-footer
-        class="bg-transparent max-h-[300px] w-full">
-        <template v-slot:item="{ item }">
-          <tr class="text-sm border-t">
-            <td class="w-1/4 text-[13px] font-bold">合計</td>
-            <td class="w-1/4 text-center text-[13px] font-bold">{{ item.guest_count }}人</td>
-            <td class="w-1/4 text-center text-[13px] font-bold">{{ item.count }}組</td>
-            <td class="w-1/4 text-end text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
+        <template v-slot:bottom>
+          <tr class="flex justify-around font-bold border-t" v-for="item in total">
+            <td class="w-1/4 py-4 px-4 text-[13px] font-bold">合計</td>
+            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.guest_count }}人</td>
+            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.count }}組</td>
+            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
           </tr>
         </template>
       </v-data-table>

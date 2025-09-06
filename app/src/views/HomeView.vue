@@ -1,6 +1,5 @@
 <script setup>
   import DailyView from './components/DailyView.vue';
-  import MonthlyView from './components/MonthlyView.vue';
   import CacheDay from './components/CacheDay.vue';
   import SmText from '@/components/SmText.vue';
   import LineBtn from '@/components/LineBtn.vue';
@@ -126,10 +125,6 @@
       </div>
     </v-card>
     
-    <div class="mb-10">
-      <MonthlyView v-bind:parent-date="parentDate"/>
-    </div>
-
     <div class="flex justify-around pb-5">
       <SmExcelBtn v-bind:parent-date="parentDate"></SmExcelBtn>
       <LineBtn v-bind:parent-date="parentDate"></LineBtn>

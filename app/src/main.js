@@ -6,6 +6,12 @@ import router from './router'
 import './assets/main.css'
 import './assets/firebase.init'
 import { userStatus } from './stores/userStatus'
+import { provide } from 'vue'
+
+const grobalItem = {
+  today: null,
+};
+
 // Vuetify 関連
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
@@ -48,6 +54,7 @@ onAuthStateChanged(auth, (user) => {
     })
 
     app.use(router)
+    app.provide('grobalItem', grobalItem)
     app.use(vuetify)
     app.mount('#app')
   }

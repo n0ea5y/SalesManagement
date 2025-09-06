@@ -3,6 +3,9 @@ import { RouterView, useRoute } from 'vue-router'
 import AuthLayout from './layouts/AuthLayout.vue';
 import HeaderView from '@/views/components/HeaderView.vue';
 import { computed } from 'vue';
+import { inject } from 'vue';
+
+const grobalItem = inject('grobalItem');
 const vModel = defineModel();
 const now = new Date();
 let targetDate = new Date(now);
@@ -18,6 +21,8 @@ function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
+
+  grobalItem.today = `${y}-${m}-${d}`;
   return `${y}-${m}-${d}`;
 }
 vModel.value = formatDate(targetDate);

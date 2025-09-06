@@ -111,6 +111,7 @@ const logout = () => {
             <router-link class="" to="/media-agent" @click="closeMenu">集客媒体</router-link>
             <router-link to="/wholesaler" @click="closeMenu">卸売業者</router-link>
             <router-link to="/staff" @click="closeMenu">スタッフ</router-link>
+            <router-link to="/month-data" @click="closeMenu">月まとめ</router-link>
           </div>
 
           <div class="mt-auto mb-10 mx-auto">
