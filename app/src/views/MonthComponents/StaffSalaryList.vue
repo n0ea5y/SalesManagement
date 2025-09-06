@@ -95,8 +95,8 @@
             </template>
             <template v-slot:bottom>
                 <tr class="flex justify-around font-bold border-t">
-                    <td class="w-1/2 py-2 px-4">合計</td>
-                    <td class="w-1/2 py-2 px-4 text-end">{{formatNumber(total)}}円</td>
+                    <td class="w-1/2 py-4 px-4">合計</td>
+                    <td class="w-1/2 py-4 px-4 text-end">{{formatNumber(total)}}円</td>
                 </tr>
             </template>
       </v-data-table>

@@ -121,7 +121,9 @@
         class="bg-transparent max-h-[300px] w-full">
             <template v-slot:item="{ item }">
                 <tr class="text-no-wrap">
-                    <td class="">{{ item.name }}</td>
+                    <td class="sticky left-0 bg-white z-10">
+                        {{ item.name }}
+                    </td>
                     <td class="text-end">{{ guestCountMapping(item.id) }}人</td>
                     <td class="text-end">{{ countMapping(item.id) }}組</td>
                     <td class="text-end">{{formatNumber(StaffSalaryMapping(item.id))}}円</td>

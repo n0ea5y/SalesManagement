@@ -99,25 +99,25 @@
 
 <template>
   <div class="overflow-x-auto">
-    <v-card class="w-[98%] mx-auto mb-2" subtitle="月売上">
+    <v-card class="w-[98%] mx-auto mb-2" subtitle="月売">
       <v-data-table :items="mediaAgencies" :items-per-page="-1" hide-default-header hide-default-footer
-        class="bg-transparent max-h-[400px] w-full">
-        <template v-slot:item="{ item }">
-          <tr class="text-sm">
-            <td class="w-1/4 text-[13px]">{{ item.title }}</td>
-            <td class="w-1/4 text-end text-[13px]">{{ guestCountMapping(item.key)}}人</td>
-            <td class="w-1/4 text-end text-[13px]">{{ countCountMapping(item.key)}}組</td>
-            <td class="w-1/4 text-end text-[13px]">{{ formatNumber(amountCountMapping(item.key))}}</td>
-          </tr>
-        </template>
-        <template v-slot:bottom>
-          <tr class="flex justify-around font-bold border-t" v-for="item in total">
-            <td class="w-1/4 py-4 px-4 text-[13px] font-bold">合計</td>
-            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.guest_count }}人</td>
-            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.count }}組</td>
-            <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ formatNumber(item.amount) }}</td>
-          </tr>
-        </template>
+        class="bg-transparent max-h-[300px] w-full">
+            <template v-slot:item="{ item }">
+                <tr>
+                <td class="w-1/4 text-[13px]">{{ item.title }}</td>
+                <td class="w-1/4 text-end text-[13px]">{{ guestCountMapping(item.key)}}人</td>
+                <td class="w-1/4 text-end text-[13px]">{{ countCountMapping(item.key)}}組</td>
+                <td class="w-1/4 text-end text-[13px]">{{ formatNumber(amountCountMapping(item.key))}}</td>
+                </tr>
+            </template>
+            <template v-slot:bottom>
+              <tr class="flex justify-around font-bold border-t" v-for="item in total">
+                <td class="w-1/4 py-4 px-4 text-[13px] font-bold">合計</td>
+                <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.guest_count }}人</td>
+                <td class="w-1/4 py-4 px-4 text-end text-[13px] font-bold">{{ item.count }}組</td>
+                <td class="w-1/4 py-4 px-4 text-end text-[13px] text-no-wrap font-bold">{{ formatNumber(item.amount) }}</td>
+              </tr>
+            </template>
       </v-data-table>
     </v-card>
   </div>
